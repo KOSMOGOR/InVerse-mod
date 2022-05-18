@@ -54,6 +54,33 @@ function callbacks:DreamBookUse(_type, RNG, player)
 end
 mod:AddCallback(ModCallbacks.MC_USE_ITEM, callbacks.DreamBookUse, mod.COLLECTIBLE_DREAMS_DREAM_BOOK_ACTIVE)
 
+local function HealPlayer(player, heal)
+    local num = mod.GetPlayerNum(player)
+    if not player:CanPickRedHearts() then
+        return
+    end
+    local canBeHealed = player:GetEffectiveMaxHearts() - player:GetHearts()
+    heal = math.min(heal or canBeHealed, canBeHealed, mod.Data.DreamBookCharges[num])
+    if heal ~= 0 then
+        player:AddHearts(heal)
+        mod.Data.DreamBookCharges[num] = mod.Data.DreamBookCharges[num] - heal
+        local ent = Isaac.Spawn(1000, EffectVariant.HEART, 0, player.Position - Vector(0, 60), Vector.Zero, player):ToEffect()
+        ent:FollowParent(player)
+        SFXManager():Play(SoundEffect.SOUND_BOSS2_BUBBLES)
+        return true
+    end
+end
+local function HealPlayerSoul(player)
+    local num = mod.GetPlayerNum(player)
+    if mod.Data.DreamBookCharges[num] >= 3 then
+        player:AddSoulHearts(1)
+        mod.Data.DreamBookCharges[num] = mod.Data.DreamBookCharges[num] - 3
+        local ent = Isaac.Spawn(1000, EffectVariant.HEART, 0, player.Position - Vector(0, 60), Vector.Zero, player):ToEffect()
+        ent:FollowParent(player)
+        SFXManager():Play(SoundEffect.SOUND_HOLY)
+    end
+end
+
 function callbacks:DreamBookHolding(player)
     local num = mod.GetPlayerNum(player)
     if --[[pause[num] == 0 and]] holdingTimer[num] >= 1 and player:HasCollectible(mod.COLLECTIBLE_DREAMS_DREAM_BOOK_ACTIVE) and Input.IsActionPressed(ButtonAction.ACTION_ITEM, player.ControllerIndex) then
@@ -123,33 +150,6 @@ function callbacks:DreamBookConsumeChargesOnUpdate(player)
     end
 end
 mod:AddCallback(ModCallbacks.MC_POST_PLAYER_UPDATE, callbacks.DreamBookConsumeChargesOnUpdate)
-
-function HealPlayer(player, heal)
-    local num = mod.GetPlayerNum(player)
-    if not player:CanPickRedHearts() then
-        return
-    end
-    local canBeHealed = player:GetEffectiveMaxHearts() - player:GetHearts()
-    heal = math.min(heal or canBeHealed, canBeHealed, mod.Data.DreamBookCharges[num])
-    if heal ~= 0 then
-        player:AddHearts(heal)
-        mod.Data.DreamBookCharges[num] = mod.Data.DreamBookCharges[num] - heal
-        local ent = Isaac.Spawn(1000, EffectVariant.HEART, 0, player.Position - Vector(0, 60), Vector.Zero, player):ToEffect()
-        ent:FollowParent(player)
-        SFXManager():Play(SoundEffect.SOUND_BOSS2_BUBBLES)
-        return true
-    end
-end
-function HealPlayerSoul(player)
-    local num = mod.GetPlayerNum(player)
-    if mod.Data.DreamBookCharges[num] >= 3 then
-        player:AddSoulHearts(1)
-        mod.Data.DreamBookCharges[num] = mod.Data.DreamBookCharges[num] - 3
-        local ent = Isaac.Spawn(1000, EffectVariant.HEART, 0, player.Position - Vector(0, 60), Vector.Zero, player):ToEffect()
-        ent:FollowParent(player)
-        SFXManager():Play(SoundEffect.SOUND_HOLY)
-    end
-end
 
 function callbacks:RenderChargeBar(player, offset)
     local num = mod.GetPlayerNum(player)

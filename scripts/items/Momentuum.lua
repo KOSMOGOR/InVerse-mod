@@ -1,7 +1,7 @@
 local mod = InVerse
 local callbacks = {}
 
-function PrepareEntity(ent)
+local function PrepareEntity(ent)
     ent:ToNPC().CanShutDoors = false
     ent:ClearEntityFlags(EntityFlag.FLAG_APPEAR)
     ent:AddEntityFlags(EntityFlag.FLAG_NO_BLOOD_SPLASH)
@@ -11,7 +11,7 @@ function PrepareEntity(ent)
                             GridCollisionClass.COLLISION_OBJECT and]] --
     GridCollisionClass.COLLISION_WALL_EXCEPT_PLAYER
 end
-function IsMomentuumCard(card)
+local function IsMomentuumCard(card)
     return Isaac.GetCardIdByName("mom_fool") <= card and card <= Isaac.GetCardIdByName("mom_world")
 end
 
@@ -46,7 +46,7 @@ mod.COLLECTIBLE_MOON = Isaac.GetItemIdByName("Momentuum-Moon")
 mod.TRINKET_SUN = Isaac.GetTrinketIdByName("Momentuum: XIX - The Sun")
 local deaths = {}
 
-function FindRooms(roomType, isClear)
+local function FindRooms(roomType, isClear)
     local arr = {}
     local idxs = {}
     local rooms = Game():GetLevel():GetRooms()
@@ -103,7 +103,7 @@ function callbacks:MomentuumUse(_type, RNG, player)
 end
 function callbacks:MomentuumHolding(player)
     local num = mod.GetPlayerNum(player)
-    if Momentuum.Active[num] and player:HasCollectible(mod.COLLECTIBLE_MOMENTUUM) and Input.IsActionPressed(ButtonAction.ACTION_ITEM, player.ControllerIndex) and player:GetCard(0) ~= 0 then
+    if Momentuum.Active[num] and player:HasCollectible(mod.COLLECTIBLE_MOMENTUUM) and Input.IsActionPressed(ButtonAction.ACTION_ITEM, player.ControllerIndex) and player:GetCard(0) ~= 0 and not IsMomentuumCard(player:GetCard(0)) then
         if Momentuum.lastFrameHolded[num] then
             Momentuum.holdingTimer[num] = Momentuum.holdingTimer[num] + 1
         else
@@ -115,6 +115,7 @@ function callbacks:MomentuumHolding(player)
         Momentuum.lastFrameHolded[num] = false
     end
     if Momentuum.holdingTimer[num] == 60 * 1 then
+        player:RemoveCollectible(mod.COLLECTIBLE_MOMENTUUM)
         AbsorbCard(player)
         player:AnimateCollectible(mod.COLLECTIBLE_MOMENTUUM, "HideItem", "PlayerPickupSparkle")
         Momentuum.Active[num] = false
@@ -142,8 +143,9 @@ function AbsorbCard(player)
     if card then
         if card >= 56 and card <= 77 then
             card = card - 55
-        elseif card > 22 and not IsMomentuumCard(card) then
+        elseif card > 22 then
             card = mod.rand(1, 22)
+            print(card)
         end
         SFXManager():Play(SoundEffect.SOUND_POWERUP1)
         local newCard = 0
@@ -228,6 +230,24 @@ function callbacks:MomentuumThrow(player)
             end
         end
     end
+end
+local function MomentuumWallDeath(npc)
+    local exp = Isaac.Spawn(1000, Momentuum.ExplosionVariant, 0, npc.Position + npc.Velocity * 0.8, Vector.Zero, nil)
+    exp:GetSprite():Play('Up', true)
+    exp:GetSprite().PlaybackSpeed = 0.6
+    if math.abs(npc.Velocity.Y) > math.abs(npc.Velocity.X) then
+        if npc.Velocity.Y >= 0 then exp:GetSprite().Rotation = 180 end
+    else
+        exp:GetSprite().Rotation = exp:GetSprite().Rotation + 90
+        if npc.Velocity.X < 0 then exp:GetSprite().Rotation = exp:GetSprite().Rotation + 180 end
+    end
+    SFXManager():Play(mod.SOUND_MOMENTUUM_EXPLOSION)
+    npc:Remove()
+end
+function callbacks:MomentuumDeath(npc)
+    local exp = Isaac.Spawn(1000, Momentuum.ExplosionVariant, 0, npc.Position, Vector.Zero, nil)
+    exp:GetSprite().PlaybackSpeed = 0.8
+    SFXManager():Play(mod.SOUND_MOMENTUUM_EXPLOSION)
 end
 function callbacks:MomentuumBehavior(npc)
     if npc.I1 > 0 then
@@ -408,24 +428,6 @@ function callbacks:MomentuumBehavior(npc)
         Game():GetRoom():SpawnGridEntity(Game():GetRoom():GetGridIndex(pos), GridEntityType.GRID_STAIRS, 0, 0, 0)
         npc:Die()
     end
-end
-function MomentuumWallDeath(npc)
-    local exp = Isaac.Spawn(1000, Momentuum.ExplosionVariant, 0, npc.Position + npc.Velocity * 0.8, Vector.Zero, nil)
-    exp:GetSprite():Play('Up', true)
-    exp:GetSprite().PlaybackSpeed = 0.6
-    if math.abs(npc.Velocity.Y) > math.abs(npc.Velocity.X) then
-        if npc.Velocity.Y >= 0 then exp:GetSprite().Rotation = 180 end
-    else
-        exp:GetSprite().Rotation = exp:GetSprite().Rotation + 90
-        if npc.Velocity.X < 0 then exp:GetSprite().Rotation = exp:GetSprite().Rotation + 180 end
-    end
-    SFXManager():Play(mod.SOUND_MOMENTUUM_EXPLOSION)
-    npc:Remove()
-end
-function callbacks:MomentuumDeath(npc)
-    local exp = Isaac.Spawn(1000, Momentuum.ExplosionVariant, 0, npc.Position, Vector.Zero, nil)
-    exp:GetSprite().PlaybackSpeed = 0.8
-    SFXManager():Play(mod.SOUND_MOMENTUUM_EXPLOSION)
 end
 function callbacks:MomentuumRevive(player)
     for slot = 0, 3 do
@@ -740,16 +742,16 @@ function callbacks:OnUseCard(card, player, flags)
         table.insert(mod.Data.Players[num].ItemsRemoveNextRoom, mod.NULL_STRENGTH)
         table.insert(mod.Data.Players[num].ItemsRemoveNextRoom, CollectibleType.COLLECTIBLE_WAFER)
         table.insert(mod.Data.Players[num].ItemsRemoveNextRoom, CollectibleType.COLLECTIBLE_BLOODY_LUST)]]
-        player:AddItemForRoom(player, mod.NULL_STRENGTH)
-        player:AddItemForRoom(player, CollectibleType.COLLECTIBLE_WAFER)
-        player:AddItemForRoom(player, CollectibleType.COLLECTIBLE_BLOODY_LUST)
+        mod.AddItemForRoom(player, mod.NULL_STRENGTH)
+        mod.AddItemForRoom(player, CollectibleType.COLLECTIBLE_WAFER)
+        mod.AddItemForRoom(player, CollectibleType.COLLECTIBLE_BLOODY_LUST)
         player.SpriteScale = player.SpriteScale + Vector(1, 1)
     elseif cardName == "Momentuum: XII - The Hanged Man" then
         mod.AddTrinketAsItem(player, TrinketType.TRINKET_FLAT_FILE)
         table.insert(mod.Data.Players[num].TrinketsRemoveNextFloor, TrinketType.TRINKET_FLAT_FILE)
         --[[player:AddCollectible(CollectibleType.COLLECTIBLE_TRANSCENDENCE)
         table.insert(mod.Data.Players[num].ItemsRemoveNextFloor, CollectibleType.COLLECTIBLE_TRANSCENDENCE)]]
-        player:AddItemForRoom(player, CollectibleType.COLLECTIBLE_TRANSCENDENCE)
+        mod.AddItemForRoom(player, CollectibleType.COLLECTIBLE_TRANSCENDENCE)
         mod.Data.Players[num].HangedMan = true
         player:AddCacheFlags(CacheFlag.CACHE_TEARFLAG | CacheFlag.CACHE_TEARCOLOR)
     elseif cardName == "Momentuum: XIII - Death" then
@@ -769,18 +771,18 @@ function callbacks:OnUseCard(card, player, flags)
         mod.Data.Players[num].Tower = 0
         --[[player:AddCollectible(CollectibleType.COLLECTIBLE_HOST_HAT)
         table.insert(mod.Data.Players[num].ItemsRemoveNextRoom, CollectibleType.COLLECTIBLE_HOST_HAT)]]
-        player:AddItemForRoom(player, CollectibleType.COLLECTIBLE_HOST_HAT)
+        mod.AddItemForRoom(player, CollectibleType.COLLECTIBLE_HOST_HAT)
     elseif cardName == "Momentuum: XVII - The Stars" then
         --[[player:AddCollectible(CollectibleType.COLLECTIBLE_SACRED_ORB)
         player:AddCollectible(CollectibleType.COLLECTIBLE_GLITCHED_CROWN)
         table.insert(mod.Data.Players[num].ItemsRemoveNextRoom, CollectibleType.COLLECTIBLE_SACRED_ORB)
         table.insert(mod.Data.Players[num].ItemsRemoveNextRoom, CollectibleType.COLLECTIBLE_GLITCHED_CROWN)]]
-        player:AddItemForRoom(player, CollectibleType.COLLECTIBLE_SACRED_ORB)
-        player:AddItemForRoom(player, CollectibleType.COLLECTIBLE_GLITCHED_CROWN)
+        mod.AddItemForRoom(player, CollectibleType.COLLECTIBLE_SACRED_ORB)
+        mod.AddItemForRoom(player, CollectibleType.COLLECTIBLE_GLITCHED_CROWN)
         if player:HasCollectible(CollectibleType.COLLECTIBLE_TAROT_CLOTH) then
             --[[player:AddCollectible(CollectibleType.COLLECTIBLE_MORE_OPTIONS)
             table.insert(mod.Data.Players[num].ItemsRemoveNextRoom, CollectibleType.COLLECTIBLE_MORE_OPTIONS)]]
-            player:AddItemForRoom(player, CollectibleType.COLLECTIBLE_MORE_OPTIONS)
+            mod.AddItemForRoom(player, CollectibleType.COLLECTIBLE_MORE_OPTIONS)
         end
         player:UseCard(Card.CARD_STARS, UseFlag.USE_NOANIM | UseFlag.USE_NOANNOUNCER)
     elseif cardName == "Momentuum: XVIII - The Moon" then
@@ -806,12 +808,12 @@ function callbacks:OnUseCard(card, player, flags)
         player:AddCollectible(CollectibleType.COLLECTIBLE_XRAY_VISION)
         table.insert(mod.Data.Players[num].ItemsRemoveNextFloor, CollectibleType.COLLECTIBLE_MIND)
         table.insert(mod.Data.Players[num].ItemsRemoveNextFloor, CollectibleType.COLLECTIBLE_XRAY_VISION)]]
-        player:AddItemForFloor(player, CollectibleType.COLLECTIBLE_MIND)
-        player:AddItemForFloor(player, CollectibleType.COLLECTIBLE_XRAY_VISION)
+        mod.AddItemForFloor(player, CollectibleType.COLLECTIBLE_MIND)
+        mod.AddItemForFloor(player, CollectibleType.COLLECTIBLE_XRAY_VISION)
         if player:HasCollectible(CollectibleType.COLLECTIBLE_TAROT_CLOTH) then
             --[[player:AddCollectible(CollectibleType.COLLECTIBLE_BLACK_CANDLE)
             table.insert(mod.Data.Players[num].ItemsRemoveNextFloor, CollectibleType.COLLECTIBLE_BLACK_CANDLE)]]
-        player:AddItemForFloor(player, CollectibleType.COLLECTIBLE_BLACK_CANDLE)
+        mod.AddItemForFloor(player, CollectibleType.COLLECTIBLE_BLACK_CANDLE)
         end
     end
 end

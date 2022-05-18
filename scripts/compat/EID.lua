@@ -20,7 +20,7 @@ local MomentuumCardDesc = {
         [Card.CARD_DEVIL] = "In each uncleared room gives the {{Collectible34}} effect#Has a 20% chance of breaking on taking damage ",
         [Card.CARD_TOWER] = "Gives {{Collectible375}}#A bomb is placed every half a second#The bomb has a 5% chance of being replaced by a special one",
         [Card.CARD_STARS] = "Teleports to treasure room#The item is rerolled with the effects of {{Collectible689}} and {{Collectible691}}",
-        [Card.CARD_MOON] = "Gives the active item The Moon ( {{Моментуум-Луна}} )#Teleports through all the secret rooms#The order is: Secret > Super Secret > Ultra Secret Room#After teleporting to the ultra secret room the item breaks",
+        [Card.CARD_MOON] = "Gives the active item The Moon {{MomentuumMoon}}#Teleports through all the secret rooms#The order is: Secret > Super Secret > Ultra Secret Room#After teleporting to the ultra secret room the item breaks",
         [Card.CARD_SUN] = "If there is 1/2 red health or less left when taking damage, uses the \"Sun\" card and gives a broken heart#Has 40% of breaking when activated",
         [Card.CARD_JUDGEMENT] = "Spawns all kinds of beggars",
         [Card.CARD_WORLD] = "Gives the effects of {{Collectible333}}, {{Collectible76}} and {{highlighting stone}} for the floor"
@@ -44,7 +44,7 @@ local MomentuumCardDesc = {
         [Card.CARD_DEVIL] = "В каждой незачщиненной комнате даёт эффект {{Collectible34}}#При получении урона имеет 20% шанс сломаться",
         [Card.CARD_TOWER] = "Даёт {{Collectible375}}#Каждые пол секунды ставится бомба#У бомбы есть шанс 5% замениться на особую",
         [Card.CARD_STARS] = "Телепортирует в сокровищницу#Предмет рероллится с эффектами {{Collectible689}} и {{Collectible691}}",
-        [Card.CARD_MOON] = "Даёт активный предмет Луна ( {{Моментуум-Луна}} )#Телепортирует по всем секретным комнатам#Порядок: Секретная > Супер секретная > Ультра секретная комната#После телепорта в ультра секретную комнату предмет ломается",
+        [Card.CARD_MOON] = "Даёт активный предмет Луна {{MomentuumMoon}}#Телепортирует по всем секретным комнатам#Порядок: Секретная > Супер секретная > Ультра секретная комната#После телепорта в ультра секретную комнату предмет ломается",
         [Card.CARD_SUN] = "Если при получении урона осталось 1/2 красного здоровья или меньше, использует карту \"Солнце\" и даёт разбитое сердце#При активации имеет 40% шанс сломаться",
         [Card.CARD_JUDGEMENT] = "Создаёт все виды попрошаек",
         [Card.CARD_WORLD] = "Даёт на этаж эффекты {{Collectible333}}, {{Collectible76}} и {{подсвечивающего камня}}"
@@ -103,8 +103,8 @@ local MomTrinketMomsBoxDesc = {
     }
 }
 local MomentuumMoonDesc = {
-    en = "Gives the active item The Moon ( {{Моментуум-Луна}} )#Teleports through all the secret rooms#The order is: Secret > Super Secret > Ultra Secret Room#After teleporting to the ultra secret room the item breaks",
-    ru = "Даёт активный предмет Луна ( {{Моментуум-Луна}} )#Телепортирует по всем секретным комнатам#Порядок: Секретная > Супер секретная > Ультра секретная комната#После телепорта в ультра секретную комнату предмет ломается"
+    en = "Gives the active item The Moon {{MomentuumMoon}}#Teleports through all the secret rooms#The order is: Secret > Super Secret > Ultra Secret Room#After teleporting to the ultra secret room the item breaks",
+    ru = "Даёт активный предмет Луна {{MomentuumMoon}}#Телепортирует по всем секретным комнатам#Порядок: Секретная > Супер секретная > Ультра секретная комната#После телепорта в ультра секретную комнату предмет ломается"
 }
 local MomToCard = {
     [Isaac.GetCardIdByName("mom_fool")] = Card.CARD_FOOL,
@@ -123,7 +123,7 @@ local MomToCard = {
     [Isaac.GetCardIdByName("mom_world")] = Card.CARD_WORLD
 }
 
-function HasMomentuum(descObj)
+local function HasMomentuum(descObj)
     for i = 0, Game():GetNumPlayers() - 1 do
         local player = Isaac.GetPlayer(i)
         if player:HasCollectible(mod.COLLECTIBLE_MOMENTUUM) then
@@ -131,7 +131,7 @@ function HasMomentuum(descObj)
         end
     end
 end
-function IsDreamExists(descObj)
+local function IsDreamExists(descObj)
     for i = 0, Game():GetNumPlayers() - 1 do
         local player = Isaac.GetPlayer(i)
         if player:GetPlayerType() == mod.PLAYER_DREAM then
@@ -139,7 +139,7 @@ function IsDreamExists(descObj)
         end
     end
 end
-function IsMomentuumTrinket(descObj)
+local function IsMomentuumTrinket(descObj)
     return HasMomentuum(descObj) and descObj.ObjType == 5 and descObj.ObjVariant == 350 and ({
         [mod.TRINKET_DEVIL] = true,
         [mod.TRINKET_EMPRESS] = true,
@@ -148,13 +148,26 @@ function IsMomentuumTrinket(descObj)
         [mod.TRINKET_SUN] = true
     })[descObj.ObjSubType]
 end
-function IsMomentuumCard(descObj)
+local function IsMomentuumCard(descObj)
     return Isaac.GetCardIdByName("mom_fool") <= descObj.ObjSubType and descObj.ObjSubType <= Isaac.GetCardIdByName("mom_world")
 end
-function IsCardCanBeMomentued(descObj)
+local function IsCardCanBeMomentued(descObj)
     return HasMomentuum(descObj) and descObj.ObjType == 5 and descObj.ObjVariant == 300 and (MomentuumCardDesc.en[descObj.ObjSubType] or MomentuumCardDesc.en[descObj.ObjSubType - 55])
 end
-function AddMomentuumCardDescCallback(descObj)
+local function CardHasTarotDesc(descObj)
+    return MomCardTarotDesc.en[descObj.ObjSubType] or MomCardTarotDesc.en[MomToCard[descObj.ObjSubType]] or MomCardTarotDesc.en[descObj.ObjSubType - 55]
+end
+local function HasTarotClothAndMomCard(descObj)
+    return EID.collectiblesOwned[CollectibleType.COLLECTIBLE_TAROT_CLOTH] and IsMomentuumCard(descObj) and CardHasTarotDesc(descObj)
+end
+local function GetMomCardTarotDesc(descObj)
+    local desc1 = mod._if(EID:getLanguage() == "ru", MomCardTarotDesc.ru[descObj.ObjSubType], MomCardTarotDesc.en[descObj.ObjSubType])
+    local desc2 = mod._if(EID:getLanguage() == "ru", MomCardTarotDesc.ru[MomToCard[descObj.ObjSubType]], MomCardTarotDesc.en[MomToCard[descObj.ObjSubType]])
+    local desc3 = mod._if(EID:getLanguage() == "ru", MomCardTarotDesc.ru[descObj.ObjSubType - 55], MomCardTarotDesc.en[descObj.ObjSubType - 55])
+    local desc = desc1 or desc2 or desc3
+    return desc
+end
+local function AddMomentuumCardDescCallback(descObj)
     local desc1 = mod._if(EID:getLanguage() == "ru", MomentuumCardDesc.ru[descObj.ObjSubType], MomentuumCardDesc.en[descObj.ObjSubType])
     local desc2 = mod._if(EID:getLanguage() == "ru", MomentuumCardDesc.ru[descObj.ObjSubType - 55], MomentuumCardDesc.en[descObj.ObjSubType - 55])
     local desc = desc1 or desc2
@@ -169,36 +182,31 @@ function AddMomentuumCardDescCallback(descObj)
     --descObj.Description = "#{{Momentuum}} " .. desc
     return descObj
 end
-function CardHasTarotDesc(descObj)
-    return MomCardTarotDesc.en[descObj.ObjSubType] or MomCardTarotDesc.en[MomToCard[descObj.ObjSubType]] or MomCardTarotDesc.en[descObj.ObjSubType - 55]
-end
-function HasTarotClothAndMomCard(descObj)
-    return EID.collectiblesOwned[CollectibleType.COLLECTIBLE_TAROT_CLOTH] and IsMomentuumCard(descObj) and CardHasTarotDesc(descObj)
-end
-function GetMomCardTarotDesc(descObj)
-    local desc1 = mod._if(EID:getLanguage() == "ru", MomCardTarotDesc.ru[descObj.ObjSubType], MomCardTarotDesc.en[descObj.ObjSubType])
-    local desc2 = mod._if(EID:getLanguage() == "ru", MomCardTarotDesc.ru[MomToCard[descObj.ObjSubType]], MomCardTarotDesc.en[MomToCard[descObj.ObjSubType]])
-    local desc3 = mod._if(EID:getLanguage() == "ru", MomCardTarotDesc.ru[descObj.ObjSubType - 55], MomCardTarotDesc.en[descObj.ObjSubType - 55])
-    local desc = desc1 or desc2 or desc3
-    return desc
-end
-function AddDreamGlitchedDeckCallback(descObj)
+local function AddDreamGlitchedDeckCallback(descObj)
     local desc = mod._if(EID:getLanguage() == "ru", "Если предмет держит Дрим, то увеличивает вероятность спавна Моментуум Карт", "If held by Dream increaces the chance of Momentuum Card spawning")
     EID:appendToDescription(descObj, "#{{DreamIcon}} " .. desc)
     return descObj
 end
-function ChangeMomCardTarotDescCallback(descObj)
+local function ChangeMomCardTarotDescCallback(descObj)
     local desc = mod._if(EID:getLanguage() == "ru", MomCardTarotDesc.ru[MomToCard[descObj.ObjSubType]], MomCardTarotDesc.en[MomToCard[descObj.ObjSubType]])
     descObj.Description = desc
     return descObj
 end
-function IsMomTrinketAndMomsBox(descObj)
+local function IsMomTrinketAndMomsBox(descObj)
     return (IsMomentuumTrinket(descObj) or IsMomentuumTrinket(descObj)) and EID.collectiblesOwned[CollectibleType.COLLECTIBLE_MOMS_BOX]
 end
-function ChangeMomTrinketMomsBoxDescCallback(descObj)
+local function ChangeMomTrinketMomsBoxDescCallback(descObj)
     local desc = mod._if(EID:getLanguage() == "ru", MomTrinketMomsBoxDesc.ru[MomToCard[descObj.ObjSubType]], MomTrinketMomsBoxDesc.en[MomToCard[descObj.ObjSubType]])
     descObj.Description = desc
     return descObj
+end
+local function HasCarBatteru(descObj)
+    for i = 0, Game():GetNumPlayers() - 1 do
+        local player = Isaac.GetPlayer(i)
+        if player:HasCollectible(CollectibleType.COLLECTIBLE_CAR_BATTERY) then
+            return true
+        end
+    end
 end
 
 if EID then
@@ -227,7 +235,7 @@ if EID then
     EID:addDescriptionModifier("DreamGlitchedDeck", function(descObj) return descObj.fullItemString == "5.100." .. mod.COLLECTIBLE_GLITCHED_DECK and IsDreamExists(descObj) end, AddDreamGlitchedDeckCallback)
     EID:addDescriptionModifier("MomTrinketMomsBoxDesc", IsMomTrinketAndMomsBox, ChangeMomTrinketMomsBoxDescCallback)
     EID:addDescriptionModifier("AddMoonCarBatteryDesc", function (descObj)
-        return descObj.fullItemString == "5.100." .. mod.COLLECTIBLE_MOON or descObj.fullItemString == "5.300." .. Card.CARD_MOON and EID.collectiblesOwned[CollectibleType.COLLECTIBLE_CAR_BATTERY]
+        return (descObj.fullItemString == "5.100." .. mod.COLLECTIBLE_MOON or descObj.fullItemString == "5.300." .. Card.CARD_MOON and HasMomentuum(descObj)) and HasCarBatteru(descObj)
     end, function(descObj)
         local desc = mod._if(EID:getLanguage() == "ru", "Перед поломкой можно активировать ещё 1 раз для телепорта в комнату \"Я - Ошибка\"", "Before the breaking you can activate it 1 more time to teleport to the \"I am a Error\" room")
         EID:appendToDescription(descObj, "#{{Collectible356}} " .. desc)

@@ -94,7 +94,7 @@ function callbacks:OnInit(player)
 end
 mod:AddCallback(ModCallbacks.MC_POST_PLAYER_INIT, callbacks.OnInit)
 
-function MeltingHeartsTime(hearts)
+local function MeltingHeartsTime(hearts)
     return 2 * (2.71828)^(-hearts / 6 + 3) + 1
 end
 

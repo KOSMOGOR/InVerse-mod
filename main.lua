@@ -3,7 +3,7 @@ InVerse = mod
 
 ---------------------------------------------------------------
 ---------------------------Savedata----------------------------
-function Copy(obj, seen)
+local function Copy(obj, seen)
     if type(obj) ~= 'table' then return obj end
     if seen and seen[obj] then return seen[obj] end
     local s = seen or {}
@@ -105,7 +105,7 @@ function mod.keys(t)
     return keys
 end
 
-function HideWisp(wisp)
+local function HideWisp(wisp)
     wisp:RemoveFromOrbit()
     wisp.Position = Vector(-100, -100)
     wisp:ClearEntityFlags(EntityFlag.FLAG_APPEAR)
@@ -117,25 +117,28 @@ function HideWisp(wisp)
 end
 
 function mod.AddItemForFloor(player, item)
-    local wisp = player:CreateItemWisp(item, Vector.Zero)
+    local num = mod.GetPlayerNum(player)
+    local wisp = player:AddItemWisp(item, Vector.Zero)
     HideWisp(wisp)
-    table.insert(mod.Data.ItemsRemoveNextFloor)
+    table.insert(mod.Data.Players[num].ItemsRemoveNextFloor, item)
 end
 function mod.AddItemForRoom(player, item)
-    local wisp = player:CreateItemWisp(item, Vector.Zero)
+    local num = mod.GetPlayerNum(player)
+    local wisp = player:AddItemWisp(item, Vector.Zero)
     HideWisp(wisp)
-    table.insert(mod.Data.ItemsRemoveNextRoom)
+    table.insert(mod.Data.Players[num].ItemsRemoveNextRoom, item)
 end
 
 mod:AddCallback(ModCallbacks.MC_POST_NEW_LEVEL, function()
-    for i = 0, Game():GetNumPlayers() do
+    for i = 0, Game():GetNumPlayers() - 1 do
         local player = Isaac.GetPlayer(i)
         local num = i + 1
         for j, elem in pairs(mod.Data.Players[num].ItemsRemoveNextFloor) do
             local wisps = Isaac.FindByType(EntityType.ENTITY_FAMILIAR, FamiliarVariant.ITEM_WISP, elem)
             for w = 1, #wisps do
-                if wisps[w].Player.Index == player.Index and not wisps[w].Visible and wisps[w].CollisionDamage == 0 and wisps[w].EntityCollisionClass == 0 then
-                    wisps[w]:Remove()
+                if wisps[w]:ToFamiliar().Player.Index == player.Index and not wisps[w].Visible and wisps[w].EntityCollisionClass == 0 then
+                    wisps[w]:Kill()
+                    SFXManager():Stop(SoundEffect.SOUND_STEAM_HALFSEC)
                     mod.Data.Players[num].ItemsRemoveNextFloor[j] = nil
                 end
             end
@@ -154,8 +157,9 @@ mod:AddCallback(ModCallbacks.MC_POST_NEW_ROOM, function()
         for j, elem in pairs(mod.Data.Players[num].ItemsRemoveNextRoom) do
             local wisps = Isaac.FindByType(EntityType.ENTITY_FAMILIAR, FamiliarVariant.ITEM_WISP, elem)
             for w = 1, #wisps do
-                if wisps[w].Player.Index == player.Index and not wisps[w].Visible and wisps[w].CollisionDamage == 0 and wisps[w].EntityCollisionClass == 0 then
-                    wisps[w]:Remove()
+                if wisps[w]:ToFamiliar().Player.Index == player.Index and wisps[w].EntityCollisionClass == 0 then
+                    wisps[w]:Kill()
+                    SFXManager():Stop(SoundEffect.SOUND_STEAM_HALFSEC)
                     mod.Data.Players[num].ItemsRemoveNextRoom[j] = nil
                 end
             end
