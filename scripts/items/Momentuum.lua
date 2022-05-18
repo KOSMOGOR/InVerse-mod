@@ -628,12 +628,6 @@ function callbacks:OnNewRoom()
         end
         mod.Data.Players[num].Priestess = nil
         mod.Data.Players[num].Tower = nil
-        for j, elem in pairs(mod.Data.Players[num].ItemsRemoveNextRoom) do
-            if player:HasCollectible(elem) then
-                player:RemoveCollectible(elem)
-                mod.Data.Players[num].ItemsRemoveNextRoom[j] = nil
-            end
-        end
     end
 end
 mod:AddCallback(ModCallbacks.MC_POST_NEW_ROOM, callbacks.OnNewRoom)
@@ -655,15 +649,19 @@ function callbacks:OnUseCard(card, player, flags)
     elseif cardName == "Momentuum: II - The High Priestess" then
         mod.Data.Players[num].Priestess = Isaac.GetFrameCount()
     elseif cardName == "Momentuum: IV - The Emperor" then
-        player:AddCollectible(CollectibleType.COLLECTIBLE_THERES_OPTIONS)
+        --[[player:AddCollectible(CollectibleType.COLLECTIBLE_THERES_OPTIONS)
         player:AddCollectible(CollectibleType.COLLECTIBLE_EUCHARIST)
         player:AddCollectible(CollectibleType.COLLECTIBLE_DUALITY)
         table.insert(mod.Data.Players[num].ItemsRemoveNextFloor, CollectibleType.COLLECTIBLE_THERES_OPTIONS)
         table.insert(mod.Data.Players[num].ItemsRemoveNextFloor, CollectibleType.COLLECTIBLE_EUCHARIST)
-        table.insert(mod.Data.Players[num].ItemsRemoveNextFloor, CollectibleType.COLLECTIBLE_DUALITY)
+        table.insert(mod.Data.Players[num].ItemsRemoveNextFloor, CollectibleType.COLLECTIBLE_DUALITY)]]
+        mod.AddItemForFloor(player, CollectibleType.COLLECTIBLE_THERES_OPTIONS)
+        mod.AddItemForFloor(player, CollectibleType.COLLECTIBLE_EUCHARIST)
+        mod.AddItemForFloor(player, CollectibleType.COLLECTIBLE_DUALITY)
         if player:HasCollectible(CollectibleType.COLLECTIBLE_TAROT_CLOTH) then
-            player:AddCollectible(CollectibleType.COLLECTIBLE_SOL)
-            table.insert(mod.Data.Players[num].ItemsRemoveNextFloor, CollectibleType.COLLECTIBLE_SOL)
+            --[[player:AddCollectible(CollectibleType.COLLECTIBLE_SOL)
+            table.insert(mod.Data.Players[num].ItemsRemoveNextFloor, CollectibleType.COLLECTIBLE_SOL)]]
+        mod.AddItemForFloor(player, CollectibleType.COLLECTIBLE_SOL)
         end
         local rooms = FindRooms(RoomType.ROOM_BOSS, false)
         for _, room in pairs(rooms) do
@@ -708,11 +706,13 @@ function callbacks:OnUseCard(card, player, flags)
         end
         player:SetFullHearts()
     elseif cardName == "Momentuum: VII - The Chariot" then
-        player:AddCollectible(CollectibleType.COLLECTIBLE_SACRIFICIAL_DAGGER)
-        table.insert(mod.Data.Players[num].ItemsRemoveNextFloor, CollectibleType.COLLECTIBLE_SACRIFICIAL_DAGGER)
+        --[[player:AddCollectible(CollectibleType.COLLECTIBLE_SACRIFICIAL_DAGGER)
+        table.insert(mod.Data.Players[num].ItemsRemoveNextFloor, CollectibleType.COLLECTIBLE_SACRIFICIAL_DAGGER)]]
+        mod.AddItemForFloor(player, CollectibleType.COLLECTIBLE_SACRIFICIAL_DAGGER)
         if player:HasCollectible(CollectibleType.COLLECTIBLE_TAROT_CLOTH) then
-            player:AddCollectible(CollectibleType.COLLECTIBLE_SACRIFICIAL_DAGGER)
-            table.insert(mod.Data.Players[num].ItemsRemoveNextFloor, CollectibleType.COLLECTIBLE_SACRIFICIAL_DAGGER)
+            --[[player:AddCollectible(CollectibleType.COLLECTIBLE_SACRIFICIAL_DAGGER)
+            table.insert(mod.Data.Players[num].ItemsRemoveNextFloor, CollectibleType.COLLECTIBLE_SACRIFICIAL_DAGGER)]]
+            mod.AddItemForFloor(player, CollectibleType.COLLECTIBLE_SACRIFICIAL_DAGGER)
         end
         mod.Data.Players[num].Chariot = true
     elseif cardName == "Momentuum: VIII - Justice" then
@@ -734,18 +734,22 @@ function callbacks:OnUseCard(card, player, flags)
         local h = mod._if(player:HasCollectible(CollectibleType.COLLECTIBLE_TAROT_CLOTH), 6, 4)
         player:AddMaxHearts(h, true)
         player:AddHearts(h)
-        player:AddCollectible(mod.NULL_STRENGTH)
+        --[[player:AddCollectible(mod.NULL_STRENGTH)
         player:AddCollectible(CollectibleType.COLLECTIBLE_WAFER)
         player:AddCollectible(CollectibleType.COLLECTIBLE_BLOODY_LUST)
         table.insert(mod.Data.Players[num].ItemsRemoveNextRoom, mod.NULL_STRENGTH)
         table.insert(mod.Data.Players[num].ItemsRemoveNextRoom, CollectibleType.COLLECTIBLE_WAFER)
-        table.insert(mod.Data.Players[num].ItemsRemoveNextRoom, CollectibleType.COLLECTIBLE_BLOODY_LUST)
+        table.insert(mod.Data.Players[num].ItemsRemoveNextRoom, CollectibleType.COLLECTIBLE_BLOODY_LUST)]]
+        player:AddItemForRoom(player, mod.NULL_STRENGTH)
+        player:AddItemForRoom(player, CollectibleType.COLLECTIBLE_WAFER)
+        player:AddItemForRoom(player, CollectibleType.COLLECTIBLE_BLOODY_LUST)
         player.SpriteScale = player.SpriteScale + Vector(1, 1)
     elseif cardName == "Momentuum: XII - The Hanged Man" then
         mod.AddTrinketAsItem(player, TrinketType.TRINKET_FLAT_FILE)
         table.insert(mod.Data.Players[num].TrinketsRemoveNextFloor, TrinketType.TRINKET_FLAT_FILE)
-        player:AddCollectible(CollectibleType.COLLECTIBLE_TRANSCENDENCE)
-        table.insert(mod.Data.Players[num].ItemsRemoveNextFloor, CollectibleType.COLLECTIBLE_TRANSCENDENCE)
+        --[[player:AddCollectible(CollectibleType.COLLECTIBLE_TRANSCENDENCE)
+        table.insert(mod.Data.Players[num].ItemsRemoveNextFloor, CollectibleType.COLLECTIBLE_TRANSCENDENCE)]]
+        player:AddItemForRoom(player, CollectibleType.COLLECTIBLE_TRANSCENDENCE)
         mod.Data.Players[num].HangedMan = true
         player:AddCacheFlags(CacheFlag.CACHE_TEARFLAG | CacheFlag.CACHE_TEARCOLOR)
     elseif cardName == "Momentuum: XIII - Death" then
@@ -763,16 +767,20 @@ function callbacks:OnUseCard(card, player, flags)
         mod.Data.Players[num].Temperance = true
     elseif cardName == "Momentuum: XVI - The Tower" then
         mod.Data.Players[num].Tower = 0
-        player:AddCollectible(CollectibleType.COLLECTIBLE_HOST_HAT)
-        table.insert(mod.Data.Players[num].ItemsRemoveNextRoom, CollectibleType.COLLECTIBLE_HOST_HAT)
+        --[[player:AddCollectible(CollectibleType.COLLECTIBLE_HOST_HAT)
+        table.insert(mod.Data.Players[num].ItemsRemoveNextRoom, CollectibleType.COLLECTIBLE_HOST_HAT)]]
+        player:AddItemForRoom(player, CollectibleType.COLLECTIBLE_HOST_HAT)
     elseif cardName == "Momentuum: XVII - The Stars" then
-        player:AddCollectible(CollectibleType.COLLECTIBLE_SACRED_ORB)
+        --[[player:AddCollectible(CollectibleType.COLLECTIBLE_SACRED_ORB)
         player:AddCollectible(CollectibleType.COLLECTIBLE_GLITCHED_CROWN)
         table.insert(mod.Data.Players[num].ItemsRemoveNextRoom, CollectibleType.COLLECTIBLE_SACRED_ORB)
-        table.insert(mod.Data.Players[num].ItemsRemoveNextRoom, CollectibleType.COLLECTIBLE_GLITCHED_CROWN)
+        table.insert(mod.Data.Players[num].ItemsRemoveNextRoom, CollectibleType.COLLECTIBLE_GLITCHED_CROWN)]]
+        player:AddItemForRoom(player, CollectibleType.COLLECTIBLE_SACRED_ORB)
+        player:AddItemForRoom(player, CollectibleType.COLLECTIBLE_GLITCHED_CROWN)
         if player:HasCollectible(CollectibleType.COLLECTIBLE_TAROT_CLOTH) then
-            player:AddCollectible(CollectibleType.COLLECTIBLE_MORE_OPTIONS)
-            table.insert(mod.Data.Players[num].ItemsRemoveNextRoom, CollectibleType.COLLECTIBLE_MORE_OPTIONS)
+            --[[player:AddCollectible(CollectibleType.COLLECTIBLE_MORE_OPTIONS)
+            table.insert(mod.Data.Players[num].ItemsRemoveNextRoom, CollectibleType.COLLECTIBLE_MORE_OPTIONS)]]
+            player:AddItemForRoom(player, CollectibleType.COLLECTIBLE_MORE_OPTIONS)
         end
         player:UseCard(Card.CARD_STARS, UseFlag.USE_NOANIM | UseFlag.USE_NOANNOUNCER)
     elseif cardName == "Momentuum: XVIII - The Moon" then
@@ -792,15 +800,18 @@ function callbacks:OnUseCard(card, player, flags)
             end
         end
     elseif cardName == "Momentuum: XXI - The World" then
-        player:AddCollectible(CollectibleType.COLLECTIBLE_MIND)
-        player:AddCollectible(CollectibleType.COLLECTIBLE_XRAY_VISION)
         mod.AddTrinketAsItem(player, TrinketType.TRINKET_SHINY_ROCK)
-        table.insert(mod.Data.Players[num].ItemsRemoveNextRoom, CollectibleType.COLLECTIBLE_MIND)
-        table.insert(mod.Data.Players[num].ItemsRemoveNextRoom, CollectibleType.COLLECTIBLE_XRAY_VISION)
         table.insert(mod.Data.Players[num].TrinketsRemoveNextFloor, TrinketType.TRINKET_SHINY_ROCK)
+        --[[player:AddCollectible(CollectibleType.COLLECTIBLE_MIND)
+        player:AddCollectible(CollectibleType.COLLECTIBLE_XRAY_VISION)
+        table.insert(mod.Data.Players[num].ItemsRemoveNextFloor, CollectibleType.COLLECTIBLE_MIND)
+        table.insert(mod.Data.Players[num].ItemsRemoveNextFloor, CollectibleType.COLLECTIBLE_XRAY_VISION)]]
+        player:AddItemForFloor(player, CollectibleType.COLLECTIBLE_MIND)
+        player:AddItemForFloor(player, CollectibleType.COLLECTIBLE_XRAY_VISION)
         if player:HasCollectible(CollectibleType.COLLECTIBLE_TAROT_CLOTH) then
-            player:AddCollectible(CollectibleType.COLLECTIBLE_BLACK_CANDLE)
-            table.insert(mod.Data.Players[num].ItemsRemoveNextRoom, CollectibleType.COLLECTIBLE_BLACK_CANDLE)
+            --[[player:AddCollectible(CollectibleType.COLLECTIBLE_BLACK_CANDLE)
+            table.insert(mod.Data.Players[num].ItemsRemoveNextFloor, CollectibleType.COLLECTIBLE_BLACK_CANDLE)]]
+        player:AddItemForFloor(player, CollectibleType.COLLECTIBLE_BLACK_CANDLE)
         end
     end
 end
@@ -827,17 +838,6 @@ function callbacks:OnNewLevel()
         end
         mod.Data.Players[num].Chariot = nil
         mod.Data.Players[num].HangedMan = nil
-        for j, elem in pairs(mod.Data.Players[num].ItemsRemoveNextFloor) do
-            if player:HasCollectible(elem) then
-                player:RemoveCollectible(elem)
-                mod.Data.Players[num].ItemsRemoveNextFloor[j] = nil
-            end
-        end
-        for j, elem in pairs(mod.Data.Players[num].TrinketsRemoveNextFloor) do
-            if player:TryRemoveTrinket(elem) then
-                mod.Data.Players[num].TrinketsRemoveNextFloor[j] = nil
-            end
-        end
     end
 end
 

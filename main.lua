@@ -105,6 +105,78 @@ function mod.keys(t)
     return keys
 end
 
+function HideWisp(wisp)
+    wisp:RemoveFromOrbit()
+    wisp.Position = Vector(-100, -100)
+    wisp:ClearEntityFlags(EntityFlag.FLAG_APPEAR)
+    wisp.Visible = false
+    --wisp.Color = Color(0, 0, 0)
+    wisp.CollisionDamage = 0
+    wisp.EntityCollisionClass = 0
+    wisp.Player:RemoveCostume(Isaac.GetItemConfig():GetCollectible(wisp.SubType))
+end
+
+function mod.AddItemForFloor(player, item)
+    local wisp = player:CreateItemWisp(item, Vector.Zero)
+    HideWisp(wisp)
+    table.insert(mod.Data.ItemsRemoveNextFloor)
+end
+function mod.AddItemForRoom(player, item)
+    local wisp = player:CreateItemWisp(item, Vector.Zero)
+    HideWisp(wisp)
+    table.insert(mod.Data.ItemsRemoveNextRoom)
+end
+
+mod:AddCallback(ModCallbacks.MC_POST_NEW_LEVEL, function()
+    for i = 0, Game():GetNumPlayers() do
+        local player = Isaac.GetPlayer(i)
+        local num = i + 1
+        for j, elem in pairs(mod.Data.Players[num].ItemsRemoveNextFloor) do
+            local wisps = Isaac.FindByType(EntityType.ENTITY_FAMILIAR, FamiliarVariant.ITEM_WISP, elem)
+            for w = 1, #wisps do
+                if wisps[w].Player.Index == player.Index and not wisps[w].Visible and wisps[w].CollisionDamage == 0 and wisps[w].EntityCollisionClass == 0 then
+                    wisps[w]:Remove()
+                    mod.Data.Players[num].ItemsRemoveNextFloor[j] = nil
+                end
+            end
+        end
+        for j, elem in pairs(mod.Data.Players[num].TrinketsRemoveNextFloor) do
+            if player:TryRemoveTrinket(elem) then
+                mod.Data.Players[num].TrinketsRemoveNextFloor[j] = nil
+            end
+        end
+    end
+end)
+mod:AddCallback(ModCallbacks.MC_POST_NEW_ROOM, function()
+    for i = 0, Game():GetNumPlayers() do
+        local player = Isaac.GetPlayer(i)
+        local num = i + 1
+        for j, elem in pairs(mod.Data.Players[num].ItemsRemoveNextRoom) do
+            local wisps = Isaac.FindByType(EntityType.ENTITY_FAMILIAR, FamiliarVariant.ITEM_WISP, elem)
+            for w = 1, #wisps do
+                if wisps[w].Player.Index == player.Index and not wisps[w].Visible and wisps[w].CollisionDamage == 0 and wisps[w].EntityCollisionClass == 0 then
+                    wisps[w]:Remove()
+                    mod.Data.Players[num].ItemsRemoveNextRoom[j] = nil
+                end
+            end
+        end
+    end
+end)
+mod:AddCallback(ModCallbacks.MC_POST_GAME_STARTED, function()
+    for i = 0, Game():GetNumPlayers() do
+        local player = Isaac.GetPlayer(i)
+        local num = i + 1
+        for j, elem in pairs(mod.Data.Players[num].ItemsRemoveNextRoom) do
+            local wisps = Isaac.FindByType(EntityType.ENTITY_FAMILIAR, FamiliarVariant.ITEM_WISP, elem)
+            for w = 1, #wisps do
+                if wisps[w].Player.Index == player.Index and wisps[w].Visible then
+                    HideWisp(wisps[w])
+                end
+            end
+        end
+    end
+end)
+
 mod.Characters = {}
 function mod:onCache(player, cacheFlag)
     local charType = player:GetPlayerType()
