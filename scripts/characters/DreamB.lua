@@ -168,7 +168,7 @@ mod:AddCallback(ModCallbacks.MC_POST_GAME_STARTED, callbacks.OnGameStart)
 
 function callbacks:OnUsePilfer(_type, RNG, player)
     local num = mod.GetPlayerNum(player)
-    if player:GetSoulHearts() < 8 or player:GetPlayerType() ~= mod.PLAYER_DREAMBBODY and player:GetPlayerType() ~= mod.PLAYER_DREAMBSOUL then
+    if player:GetSoulHearts() < 8 or player:GetPlayerType() ~= mod.PLAYER_DREAMBBODY then
         pilfer.Active[num] = Isaac.GetFrameCount()
         if pilfer.Aura[num] then
             pilfer.Aura[num]:Remove()
@@ -195,6 +195,7 @@ function callbacks:OnUsePilfer(_type, RNG, player)
                 entity:TakeDamage(dmg, 0, EntityRef(player), 0)
             end
         end
+        SFXManager():Play(SoundEffect.SOUND_DEATH_CARD)
     end
 end
 mod:AddCallback(ModCallbacks.MC_USE_ITEM, callbacks.OnUsePilfer, mod.COLLECTIBLE_PILFER)

@@ -7,6 +7,7 @@ local callbacks = {}
 function callbacks:OnUpdate()
     if not mod.Data.GlobalData.ItemsCanSpawn["Glitched Deck"] and #mod.keys(mod.Data.GlobalData.CardsCanSpawn) >= 3 then
         mod.Data.GlobalData.ItemsCanSpawn["Glitched Deck"] = true
+        Game():GetHUD():ShowItemText("Glitched Deck", "Has appeared in the basement")
     end
 end
 mod:AddCallback(ModCallbacks.MC_POST_UPDATE, callbacks.OnUpdate)

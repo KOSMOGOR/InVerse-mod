@@ -49,9 +49,9 @@ function mod:SaveGame(ShouldSave)
 end
 mod:AddCallback(ModCallbacks.MC_PRE_GAME_EXIT, mod.SaveGame)
 
-function mod:OnGameStart()
+function mod:OnGameStart(player)
     local isContinued = Game():GetFrameCount() ~= 0
-    if not isContinued then
+    if not isContinued and mod.GetPlayerNum(player) then
         local gd = Copy(mod.Data.GlobalData)
         mod.Data = Copy(baseData)
         for num = 1, Game():GetNumPlayers() do
@@ -137,13 +137,18 @@ function mod:onCache(player, cacheFlag)
 end
 mod:AddCallback(ModCallbacks.MC_EVALUATE_CACHE, mod.onCache)
 
---[[mod:AddCallback(ModCallbacks.MC_POST_UPDATE, function()
-    local entities = Game():GetRoom():GetEntities()
+mod:AddCallback(ModCallbacks.MC_POST_UPDATE, function()
+    --[[local entities = Game():GetRoom():GetEntities()
     for i = 0, #entities - 1 do
         local ent = entities:Get(i)
         print(ent.Type, ent.Variant)
-    end
-end)]]
+    end]]
+    --[[for i = 1, 500 do
+        if SFXManager():IsPlaying(i) then
+            print(i)
+        end
+    end]]
+end)
 
 dofile("scripts/misc/unlocks.lua")
 

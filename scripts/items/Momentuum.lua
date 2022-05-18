@@ -191,6 +191,10 @@ function AbsorbCard(player)
                 player:DropTrinket(player.Position, true)
                 player:AddTrinket(mod.TRINKET_DEVIL)
                 player:UseActiveItem(CollectibleType.COLLECTIBLE_BOOK_OF_BELIAL, UseFlag.USE_NOANIM)
+                player:UseActiveItem(CollectibleType.COLLECTIBLE_BOOK_OF_BELIAL, UseFlag.USE_NOANIM)
+                if player:HasCollectible(CollectibleType.COLLECTIBLE_MOMS_BOX) then
+                    player:UseActiveItem(CollectibleType.COLLECTIBLE_BOOK_OF_BELIAL, UseFlag.USE_NOANIM)
+                end
                 SFXManager():Stop(SoundEffect.SOUND_DEVIL_CARD)
                 mod.Data.GlobalData.TrinketsCanSpawn["Momentuum: XV - The Devil"] = true
             elseif card == Card.CARD_SUN then
@@ -616,6 +620,10 @@ function callbacks:OnNewRoom()
         end
         if player:HasTrinket(mod.TRINKET_DEVIL) and Game():GetRoom():GetAliveEnemiesCount() > 0 then
             player:UseActiveItem(CollectibleType.COLLECTIBLE_BOOK_OF_BELIAL, UseFlag.USE_NOANIM)
+            player:UseActiveItem(CollectibleType.COLLECTIBLE_BOOK_OF_BELIAL, UseFlag.USE_NOANIM)
+            if player:HasCollectible(CollectibleType.COLLECTIBLE_MOMS_BOX) then
+                player:UseActiveItem(CollectibleType.COLLECTIBLE_BOOK_OF_BELIAL, UseFlag.USE_NOANIM)
+            end
             SFXManager():Stop(SoundEffect.SOUND_DEVIL_CARD)
         end
         mod.Data.Players[num].Priestess = nil
