@@ -1,0 +1,16 @@
+<items gfxroot="gfx/items/" deathanm2="gfx/death items.anm2" version="1">
+	<passive id="1" name="Dream's Dream Book (passive)" description="Wonderful stories written within" gfx="DreamsDreamBook.png" tags="book summonable nolostbr" quality="3" />
+	<active id="1" name="Dream's Dream Book" description="Wonderful stories written within" gfx="DreamsDreamBook.png" tags="book nolostbr" quality="2" />
+	<active id="2" name="Momentuum" description="History's Piece" gfx="Momentuum.png" charges="0" quality="3" />
+	<active id="3" name="Momentuum-Moon" description="Face yourself" gfx="Momentuum-Moon.png" maxcharges="6" quality="2" />
+	<active id="4" name="Pilfer" description="The Universe accept your sacrifice" gfx="Pilfer.png" maxcharges="300" chargetype="timed" tags="nolostbr" quality="4" />
+	<passive id="5" name="Glitched Deck" description="Load ItemDescription failed: ..." gfx="Glitched_Deck.png" tags="summonable" quality="2" />
+
+	<trinket gfx="mom_magician.png" name="Momentuum: I - The Magician" description="May your goals escort you" cache="tearcolor tearflag" />
+	<trinket gfx="mom_empress.png" name="Momentuum: III - The Empress" description="May you find power in weaknesses" />
+	<trinket gfx="mom_hermit.png" name="Momentuum: IX - The Hermit" description="May your offerings be sincere" />
+	<trinket gfx="mom_devil.png" name="Momentuum: XV - The Devil" description="Revel in the power while it lasts" />
+	<trinket gfx="mom_sun.png" name="Momentuum: XIX - The Sun" description="May the light be your ally" />
+
+	<passive name="MomentuumStrengthNull" description="" hidden="true" cache="damage" />
+</items>

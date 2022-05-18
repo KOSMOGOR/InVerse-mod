@@ -1,0 +1,19 @@
+<pocketitems>
+	<card type="tarot" pickup="1" description="Where journey begins" name="Momentuum: 0 - The Fool" hud="mom_fool" announcer="375" announcerdelay="60" mimiccharge="12" />
+	<card type="tarot" pickup="1" description="Mother is watching you" name="Momentuum: II - The High Priestess" hud="mom_priestess" announcer="379" announcerdelay="110" mimiccharge="12" />
+	<card type="tarot" pickup="1" description="Challenge me!" name="Momentuum: IV - The Emperor" hud="mom_emperor" greedmode="false" announcer="373" announcerdelay="70" mimiccharge="12" />
+	<card type="tarot" pickup="1" description="Two prayers for the lost" name="Momentuum: V - The Hierophant" hud="mom_hierophant" announcer="378" announcerdelay="70" mimiccharge="12" />
+	<card type="tarot" pickup="1" description="May you prosper and be in good health" name="Momentuum: VI - The Lovers" hud="mom_lovers" announcer="380" announcerdelay="70" mimiccharge="12" />
+	<card type="tarot" pickup="1" description="May nothing stand before you" name="Momentuum: VII - The Chariot" hud="mom_chariot" announcer="371" mimiccharge="12" />
+	<card type="tarot" pickup="1" description="May your future become balanced" name="Momentuum: VIII - Justice" hud="mom_justice" announcer="349" mimiccharge="12" />
+	<card type="tarot" pickup="1" description="Spin the wheel of destiny" name="Momentuum: X - Wheel of Fortune" hud="mom_wheel" announcer="391" announcerdelay="60" mimiccharge="12" />
+	<card type="tarot" pickup="1" description="May your power bring rage" name="Momentuum: XI - Strength" hud="mom_strength" announcer="365" mimiccharge="12" />
+	<card type="tarot" pickup="1" description="May you find enlightenment " name="Momentuum: XII - The Hanged Man" hud="mom_hanged" announcer="376" mimiccharge="12" />
+	<card type="tarot" pickup="1" description="Lay waste to all that oppose you " name="Momentuum: XIII - Death" hud="mom_death" announcer="337" mimiccharge="12" />
+	<card type="tarot" pickup="1" description="May you be pure in heart" name="Momentuum: XIV - Temperance" hud="mom_temperance" announcer="370" announcerdelay="60" mimiccharge="12" />
+	<card type="tarot" pickup="1" description="Destruction brings creation" name="Momentuum: XVI - The Tower" hud="mom_tower" announcer="385" announcerdelay="20" mimiccharge="12" />
+	<card type="tarot" pickup="1" description="May you find what you desire " name="Momentuum: XVII - The Stars" hud="mom_stars" greedmode="false" announcer="383" announcerdelay="60" mimiccharge="12" />
+	<card type="tarot" pickup="1" description="May you find all you have lost" name="Momentuum: XVIII - The Moon" hud="mom_moon" greedmode="false" announcer="382" announcerdelay="60" mimiccharge="12" />
+	<card type="tarot" pickup="1" description="Judge lest ye be judged" name="Momentuum: XX - Judgement" hud="mom_judgement" announcer="348" mimiccharge="12" />
+	<card type="tarot" pickup="1" description="Open your eyes and see" name="Momentuum: XXI - The World" hud="mom_world" announcer="386" mimiccharge="12" />
+</pocketitems>
