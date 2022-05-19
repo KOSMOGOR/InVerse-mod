@@ -196,6 +196,9 @@ function callbacks:OnUsePilfer(_type, RNG, player)
             end
         end
         SFXManager():Play(SoundEffect.SOUND_DEATH_CARD)
+        local ent = Isaac.Spawn(1000, 16, 1, player.Position, Vector.Zero, player)
+        ent:GetSprite().Color = Color(0.22, 0.17, 0.32)
+        Game():ShakeScreen(15)
     end
 end
 mod:AddCallback(ModCallbacks.MC_USE_ITEM, callbacks.OnUsePilfer, mod.COLLECTIBLE_PILFER)

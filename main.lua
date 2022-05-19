@@ -273,10 +273,10 @@ end
 mod:AddCallback(ModCallbacks.MC_EVALUATE_CACHE, mod.onCache)
 
 mod:AddCallback(ModCallbacks.MC_POST_UPDATE, function()
-    --[[local entities = Game():GetRoom():GetEntities()
-    for i = 0, #entities - 1 do
+    local entities = Game():GetRoom():GetEntities()
+    --[[for i = 0, #entities - 1 do
         local ent = entities:Get(i)
-        print(ent.Type, ent.Variant)
+        print(ent.Type, ent.Variant, ent.SubType, ent:GetSprite().Color.R, ent:GetSprite().Color.G, ent:GetSprite().Color.B)
     end]]
     --[[for i = 1, 500 do
         if SFXManager():IsPlaying(i) then

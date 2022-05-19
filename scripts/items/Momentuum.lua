@@ -51,7 +51,7 @@ local function FindRooms(roomType, isClear)
     local idxs = {}
     local rooms = Game():GetLevel():GetRooms()
     for i = 0, #rooms - 1 do
-        for _, j in pairs({ -14, -13, -12, -1, 0, 1, 12, 13, 14 }) do
+        for _, j in pairs({ 0, 1, 13, 14 }) do
             local room = Game():GetLevel():GetRoomByIdx(rooms:Get(i).SafeGridIndex + j)
             if room and room.ListIndex ~= -1 and rooms:Get(room.ListIndex) and rooms:Get(room.ListIndex).Data.Type == roomType and (isClear == nil or isClear == rooms:Get(room.ListIndex).Clear) and not idxs[room.SafeGridIndex] then
                 table.insert(arr, room)
@@ -187,6 +187,13 @@ function AbsorbCard(player)
             elseif card == Card.CARD_HERMIT then
                 player:DropTrinket(player.Position, true)
                 player:AddTrinket(mod.TRINKET_HERMIT)
+                if player:HasTrinket(mod.TRINKET_HERMIT) then
+                    local rooms = FindRooms(RoomType.ROOM_SHOP, false)
+                    for i = 1, #rooms do
+                        rooms[i].DisplayFlags = 5
+                    end
+                    Game():GetLevel():UpdateVisibility()
+                end
                 mod.Data.GlobalData.TrinketsCanSpawn["Momentuum: IX - The Hermit"] = true
             elseif card == Card.CARD_DEVIL then
                 player:DropTrinket(player.Position, true)
@@ -221,7 +228,9 @@ function callbacks:MomentuumThrow(player)
         ThrowEntity:ToNPC().SpriteOffset = Vector(0, -20)
         ThrowEntity:ToNPC():GetSprite().PlaybackSpeed = 0.5
         ThrowEntity:ToNPC().Parent = player
-        local wisp = player:AddWisp(mod.COLLECTIBLE_MOMENTUUM, player.Position)
+        if player:HasCollectible(CollectibleType.COLLECTIBLE_BOOK_OF_VIRTUES) then
+            local wisp = player:AddWisp(mod.COLLECTIBLE_MOMENTUUM, player.Position)
+        end
         for slot = 0, 3 do
             if player:GetActiveItem(slot) == mod.COLLECTIBLE_MOMENTUUM then
                 player:RemoveCollectible(mod.COLLECTIBLE_MOMENTUUM, false, slot)
@@ -457,6 +466,14 @@ end, EntityType.ENTITY_PLAYER)
 
 function callbacks:MomentuumWisps(player, damageAmount, damageFlags, damageSource, damageCountdownFrames)
     player = player:ToPlayer()
+    --[[for i = 1, 32 do
+        if damageFlags & (1 << i) == 1 << i then
+            print(i)
+        end
+    end]]
+    if damageFlags & DamageFlag.DAMAGE_NO_MODIFIERS == DamageFlag.DAMAGE_NO_MODIFIERS then
+        return
+    end
     if damageAmount > 1 then
         local wisps = Isaac.FindByType(EntityType.ENTITY_FAMILIAR, FamiliarVariant.WISP)
         for _, wisp in pairs(wisps) do
@@ -493,16 +510,6 @@ function callbacks:OnPlayerUpdate(player)
         end
     end
     if player:HasTrinket(mod.TRINKET_HERMIT) then
-        local rooms = Game():GetLevel():GetRooms()
-        for i = 0, #rooms - 1 do
-            for j in ipairs({ 0, 1, 13, 14 }) do
-                local room = Game():GetLevel():GetRoomByIdx(rooms:Get(i).SafeGridIndex + j)
-                if room and room.ListIndex ~= -1 and rooms:Get(room.ListIndex).Data.Type == RoomType.ROOM_SHOP and not room.Clear then
-                    room.DisplayFlags = 5
-                end
-            end
-            Game():GetLevel():UpdateVisibility()
-        end
         if Game():GetRoom():IsClear() then
             for i = 1, Game():GetRoom():GetGridSize() do
                 local gent = Game():GetRoom():GetGridEntity(i)
@@ -555,7 +562,7 @@ function callbacks:OnPlayerUpdate(player)
         end
         for i, death in pairs(deaths) do
             if death and death:Exists() and death.HitPoints > 0 then
-                death.HitPoints = death.HitPoints - 0.1
+                death.HitPoints = death.HitPoints - 0.2
             else
                 if death and death:Exists() then
                     death:Die()
@@ -836,6 +843,13 @@ function callbacks:OnNewLevel()
             if player:GetHearts() + player:GetSoulHearts() == 0 then
                 player:AddHearts(1)
             end
+        end
+        if player:HasTrinket(mod.TRINKET_HERMIT) then
+            local rooms = FindRooms(RoomType.ROOM_SHOP, false)
+            for j = 1, #rooms do
+                rooms[j].DisplayFlags = 5
+            end
+            Game():GetLevel():UpdateVisibility()
         end
         mod.Data.Players[num].Chariot = nil
         mod.Data.Players[num].HangedMan = nil
