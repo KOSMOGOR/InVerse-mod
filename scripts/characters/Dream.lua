@@ -23,7 +23,6 @@ function callbacks:OnInit(player)
         player:AddNullCostume(mod.Characters[mod.PLAYER_DREAM].Hair)
         player:AddCollectible(mod.COLLECTIBLE_DREAMS_DREAM_BOOK_PASSIVE)
         player:AddCollectible(mod.COLLECTIBLE_MOMENTUUM)
-        Game():GetItemPool():RemoveCollectible(mod.COLLECTIBLE_DREAMS_DREAM_BOOK_PASSIVE)
     end
 end
 mod:AddCallback(ModCallbacks.MC_POST_PLAYER_INIT, callbacks.OnInit)
@@ -38,3 +37,9 @@ function callbacks:OnPlayerUpdate(player)
     end
 end
 mod:AddCallback(ModCallbacks.MC_POST_PLAYER_UPDATE, callbacks.OnPlayerUpdate)
+
+mod:AddCallback(ModCallbacks.MC_POST_GAME_STARTED, function(_, isContinued)
+    if not isContinued then
+        Game():GetItemPool():RemoveCollectible(mod.COLLECTIBLE_DREAMS_DREAM_BOOK_PASSIVE)
+    end
+end)

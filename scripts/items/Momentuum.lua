@@ -145,7 +145,6 @@ function AbsorbCard(player)
             card = card - 55
         elseif card > 22 then
             card = mod.rand(1, 22)
-            print(card)
         end
         SFXManager():Play(SoundEffect.SOUND_POWERUP1)
         local newCard = 0
