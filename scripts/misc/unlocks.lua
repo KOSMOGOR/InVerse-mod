@@ -2,12 +2,15 @@ local mod = InVerse
 
 local callbacks = {}
 
-
+local function ShowAchievment(text)
+    Game():GetHUD():ShowItemText(text, "Has appeared in the basement")
+    SFXManager():Play(SoundEffect.SOUND_GOLDENKEY)
+end
 
 function callbacks:OnUpdate()
     if not mod.Data.GlobalData.ItemsCanSpawn["Glitched Deck"] and #mod.keys(mod.Data.GlobalData.CardsCanSpawn) >= 3 then
         mod.Data.GlobalData.ItemsCanSpawn["Glitched Deck"] = true
-        Game():GetHUD():ShowItemText("Glitched Deck", "Has appeared in the basement")
+        ShowAchievment("Glitched Deck")
     end
 end
 mod:AddCallback(ModCallbacks.MC_POST_UPDATE, callbacks.OnUpdate)
@@ -90,7 +93,7 @@ function callbacks:CheckDreamBUnlock()
     if Game():GetLevel():GetStage() == 13 and Isaac.GetPlayer():GetPlayerType() == mod.PLAYER_DREAM and Game():GetLevel():GetCurrentRoomDesc().SafeGridIndex == 94 and room:IsFirstVisit() and #entities > 0 then
         if entities[1]:GetSprite():IsFinished("PayPrize") and not mod.Data.GlobalData.Unlocked["DreamBSoul"] then
             mod.Data.GlobalData.Unlocked["DreamBSoul"] = true
-            Game():GetHUD():ShowItemText("Tainted Dream", "Has appeared in the basement")
+            ShowAchievment("Tainted Dream")
         end
     end
 end

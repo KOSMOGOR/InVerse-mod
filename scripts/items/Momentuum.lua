@@ -218,7 +218,6 @@ function AbsorbCard(player)
     end
 end
 function callbacks:MomentuumThrow(player)
-    local room = Game():GetRoom():GetDecorationSeed()
     if Momentuum.Active[mod.GetPlayerNum(player)] and player:HasCollectible(mod.COLLECTIBLE_MOMENTUUM) and player:GetShootingJoystick():Length() > 0.1 then
         Momentuum.Active[mod.GetPlayerNum(player)] = false
         local throwVec = player:GetShootingJoystick():Normalized() * 20 + player.Velocity
@@ -288,8 +287,8 @@ function callbacks:MomentuumBehavior(npc)
                 if pickups[i].Price ~= 0 then
                     local allPickups = Isaac.FindByType(EntityType.ENTITY_PICKUP)
                     for j = 1, #allPickups do
-                        if allPickups[j].Price ~= 0 then
-                            allPickups[j].Price = 0
+                        if allPickups[j]:ToPickup().Price ~= 0 then
+                            allPickups[j]:ToPickup().Price = 0
                         end
                     end
                     return npc:Die()
@@ -800,15 +799,46 @@ function callbacks:OnUseCard(card, player, flags)
         player:AddCollectible(mod.COLLECTIBLE_MOON)
         --mod.Data.GlobalData.ItemsCanSpawn["Momentuum-Moon"] = true
     elseif cardName == "Momentuum: XX - Judgement" then
-        for _, beg in pairs({4, 5, 7, 9, 13, 18}) do
-            local place = Game():GetRoom():FindFreePickupSpawnPosition(player.Position, 60, true, false)
-            Isaac.Spawn(EntityType.ENTITY_SLOT, beg, 0, place, Vector.Zero, nil)
-            Isaac.Spawn(1000, EffectVariant.POOF01, 0, place, Vector.Zero, nil)
-            if player:HasCollectible(CollectibleType.COLLECTIBLE_TAROT_CLOTH) then
-                for _ = 1, 5 do
-                    place = Game():GetRoom():FindFreePickupSpawnPosition(player.Position, 140, true, false)
-                    Isaac.Spawn(EntityType.ENTITY_SLOT, beg, 0, place, Vector.Zero, nil)
-                    Isaac.Spawn(1000, EffectVariant.POOF01, 0, place, Vector.Zero, nil)
+        if not player:HasCollectible(CollectibleType.COLLECTIBLE_TAROT_CLOTH) then
+            for _, beg in pairs({4, 5, 7, 9, 13, 18}) do
+                local place = Game():GetRoom():FindFreePickupSpawnPosition(player.Position - Vector(0, 60), 30, true)
+                Isaac.Spawn(EntityType.ENTITY_SLOT, beg, 0, place, Vector.Zero, nil)
+                Isaac.Spawn(1000, EffectVariant.POOF01, 0, place, Vector.Zero, nil)
+            end
+        else
+            local room = Game():GetRoom()
+            local doors = {}
+            local entities = Isaac.GetRoomEntities()
+            for i = 0, 7 do
+                local door = Game():GetRoom():GetDoor(i)
+                if door and (door:IsOpen() or not door:IsRoomType(RoomType.ROOM_SECRET) and not door:IsRoomType(RoomType.ROOM_SUPERSECRET)) then
+                    table.insert(doors, door.Position)
+                end
+            end
+            for i = 1, #entities do
+                if entities[i].Type == 1000 then
+                    entities[i] = nil
+                else
+                    entities[i] = entities[i].Position
+                end
+            end
+            for i = 1, Game():GetRoom():GetGridSize() do
+                local pos = room:GetGridPosition(i - 1)
+                local pos1 = room:FindFreePickupSpawnPosition(pos, 15, true)
+                local f = true
+                for j = 1, #doors do
+                    if pos:Distance(doors[j]) <= 40 then
+                        f = false
+                    end
+                end
+                for j = 1, #entities do
+                    if entities[j] and pos:Distance(entities[j]) <= 30 then
+                        f = false
+                    end
+                end
+                if pos.X == pos1.X and pos.Y == pos1.Y and f then
+                    Isaac.Spawn(EntityType.ENTITY_SLOT, ({4, 5, 7, 9, 13, 18})[mod.rand(1, 6)], 0, pos, Vector.Zero, nil)
+                    Isaac.Spawn(1000, EffectVariant.POOF01, 0, pos, Vector.Zero, nil)
                 end
             end
         end
