@@ -309,8 +309,8 @@ function callbacks:CheckBRFamiliar(player)
                 pos = player.Position
             end
             BRFamiliar[num] = Isaac.Spawn(EntityType.ENTITY_FAMILIAR, FamiliarVariant.CUBE_OF_MEAT_4, 0, pos, Vector.Zero, player)
-            BRFamiliar[num]:GetSprite():ReplaceSpritesheet(0, "gfx/familiars/t_dre_br_body.png")
-            BRFamiliar[num]:GetSprite():ReplaceSpritesheet(1, "gfx/familiars/t_dre_br_head.png")
+            BRFamiliar[num]:GetSprite():ReplaceSpritesheet(0, "gfx/familiar/t_dre_br_body.png")
+            BRFamiliar[num]:GetSprite():ReplaceSpritesheet(1, "gfx/familiar/t_dre_br_head.png")
             BRFamiliar[num]:GetSprite():LoadGraphics()
         elseif (not player:HasCollectible(CollectibleType.COLLECTIBLE_BIRTHRIGHT) or player:GetPlayerType() == mod.PLAYER_DREAMBBODY) and BRFamiliar[num] and BRFamiliar[num]:Exists() then
             BRFamiliar[num]:Remove()

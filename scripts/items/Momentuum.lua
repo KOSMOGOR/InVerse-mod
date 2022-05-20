@@ -117,6 +117,9 @@ function callbacks:MomentuumHolding(player)
     if Momentuum.holdingTimer[num] == 60 * 1 then
         player:RemoveCollectible(mod.COLLECTIBLE_MOMENTUUM)
         AbsorbCard(player)
+        if player:HasCollectible(CollectibleType.COLLECTIBLE_BOOK_OF_VIRTUES) then
+            player:AddWisp(mod.COLLECTIBLE_MOMENTUUM, player.Position)
+        end
         player:AnimateCollectible(mod.COLLECTIBLE_MOMENTUUM, "HideItem", "PlayerPickupSparkle")
         Momentuum.Active[num] = false
         Momentuum.holdingTimer[num] = 0
@@ -221,7 +224,7 @@ function callbacks:MomentuumThrow(player)
         local throwVec = player:GetShootingJoystick():Normalized() * 20 + player.Velocity
         local ThrowEntity = Isaac.Spawn(Momentuum.EntityType, Momentuum.EntityVariant, 0, player.Position, throwVec, player)
         PrepareEntity(ThrowEntity)
-        ThrowEntity:ToNPC():PlaySound(38, 0.8, 0, false, 1) --THROW
+        ThrowEntity:ToNPC():PlaySound(38, 0.8, 0, false, 1)
         player:AnimateCollectible(mod.COLLECTIBLE_MOMENTUUM, "HideItem", "Idle")
         ThrowEntity:ToNPC().V1 = throwVec
         ThrowEntity:ToNPC().I1 = 15
@@ -229,7 +232,7 @@ function callbacks:MomentuumThrow(player)
         ThrowEntity:ToNPC():GetSprite().PlaybackSpeed = 0.5
         ThrowEntity:ToNPC().Parent = player
         if player:HasCollectible(CollectibleType.COLLECTIBLE_BOOK_OF_VIRTUES) then
-            local wisp = player:AddWisp(mod.COLLECTIBLE_MOMENTUUM, player.Position)
+            player:AddWisp(mod.COLLECTIBLE_MOMENTUUM, player.Position, false, true)
         end
         for slot = 0, 3 do
             if player:GetActiveItem(slot) == mod.COLLECTIBLE_MOMENTUUM then
@@ -270,7 +273,7 @@ function callbacks:MomentuumBehavior(npc)
             if enemies[i].Type == EntityType.ENTITY_GIDEON then
                 Isaac.Spawn(EntityType.ENTITY_TEAR, TearVariant.CHAOS_CARD, 0, npc.Position, Vector.Zero, nil)
                 return npc:Die()
-            elseif not enemies[i]:HasEntityFlags(EntityFlag.FLAG_FRIENDLY) then
+            elseif not enemies[i]:HasEntityFlags(EntityFlag.FLAG_FRIENDLY) and enemies[i].Type ~= EntityType.ENTITY_SHOPKEEPER then
                 enemies[i]:Kill()
                 Isaac.GetPlayer(1):UseCard(Card.CARD_DEATH, UseFlag.USE_NOANIM | UseFlag.USE_NOANNOUNCER)
                 return npc:Die()
@@ -281,34 +284,36 @@ function callbacks:MomentuumBehavior(npc)
         end
         local pickups = Isaac.FindInRadius(npc.Position, dis, EntityPartition.PICKUP)
         for i = 1, #pickups do
-            if pickups[i]:ToPickup().Price ~= 0 then
-                local allPickups = Isaac.FindByType(EntityType.ENTITY_PICKUP)
-                for j = 1, #allPickups do
-                    if allPickups[j].Price ~= 0 then
-                        allPickups[j]:ToPickup().Price = 0
+            if pickups[i].Type == EntityType.ENTITY_PICKUP then
+                if pickups[i].Price ~= 0 then
+                    local allPickups = Isaac.FindByType(EntityType.ENTITY_PICKUP)
+                    for j = 1, #allPickups do
+                        if allPickups[j].Price ~= 0 then
+                            allPickups[j].Price = 0
+                        end
                     end
+                    return npc:Die()
+                elseif pickups[i].Variant == PickupVariant.PICKUP_COLLECTIBLE then
+                    if pickups[i].SubType == mod.COLLECTIBLE_DREAMS_DREAM_BOOK_ACTIVE then
+                        pickups[i]:Morph(EntityType.ENTITY_PICKUP, PickupVariant.PICKUP_COLLECTIBLE, mod.COLLECTIBLE_DREAMS_DREAM_BOOK_PASSIVE)
+                    elseif ({
+                        [CollectibleType.COLLECTIBLE_DECK_OF_CARDS] = true,
+                        [CollectibleType.COLLECTIBLE_STARTER_DECK] = true,
+                        [CollectibleType.COLLECTIBLE_BOOSTER_PACK] = true
+                    })[pickups[i].SubType] and mod.Data.GlobalData.ItemsCanSpawn["Glitched Deck"] then
+                        pickups[i]:Morph(EntityType.ENTITY_PICKUP, PickupVariant.PICKUP_COLLECTIBLE, mod.COLLECTIBLE_GLITCHED_DECK)
+                        --mod.Data.GlobalData.ItemsCanSpawn["Glitched Deck"] = true
+                    elseif Isaac.GetItemConfig():GetCollectible(pickups[i].SubType).Quality == 0 then
+                        Isaac.GetPlayer(1):UseCard(Card.RUNE_BLACK, UseFlag.USE_NOANIM | UseFlag.USE_NOANNOUNCER)
+                    elseif Isaac.GetItemConfig():GetCollectible(pickups[i].SubType).Quality == 1 then
+                        Isaac.Spawn(EntityType.ENTITY_PICKUP, PickupVariant.PICKUP_COLLECTIBLE, pickups[i].SubType, pickups[i].Position, Vector.Zero, pickups[i])
+                        Isaac.GetPlayer(1):UseCard(Card.RUNE_BLACK, UseFlag.USE_NOANIM | UseFlag.USE_NOANNOUNCER)
+                    else
+                        Isaac.Spawn(EntityType.ENTITY_PICKUP, PickupVariant.PICKUP_COLLECTIBLE, pickups[i].SubType,
+                            Game():GetRoom():FindFreePickupSpawnPosition(pickups[i].Position, dis, false, false), Vector.Zero, pickups[i])
+                    end
+                    return npc:Die()
                 end
-                return npc:Die()
-            elseif pickups[i].Variant == PickupVariant.PICKUP_COLLECTIBLE then
-                if pickups[i].SubType == mod.COLLECTIBLE_DREAMS_DREAM_BOOK_ACTIVE then
-                    pickups[i]:ToPickup():Morph(EntityType.ENTITY_PICKUP, PickupVariant.PICKUP_COLLECTIBLE, mod.COLLECTIBLE_DREAMS_DREAM_BOOK_PASSIVE)
-                elseif ({
-                    [CollectibleType.COLLECTIBLE_DECK_OF_CARDS] = true,
-                    [CollectibleType.COLLECTIBLE_STARTER_DECK] = true,
-                    [CollectibleType.COLLECTIBLE_BOOSTER_PACK] = true
-                })[pickups[i].SubType] and mod.Data.GlobalData.ItemsCanSpawn["Glitched Deck"] then
-                    pickups[i]:ToPickup():Morph(EntityType.ENTITY_PICKUP, PickupVariant.PICKUP_COLLECTIBLE, mod.COLLECTIBLE_GLITCHED_DECK)
-                    --mod.Data.GlobalData.ItemsCanSpawn["Glitched Deck"] = true
-                elseif Isaac.GetItemConfig():GetCollectible(pickups[i].SubType).Quality == 0 then
-                    Isaac.GetPlayer(1):UseCard(Card.RUNE_BLACK, UseFlag.USE_NOANIM | UseFlag.USE_NOANNOUNCER)
-                elseif Isaac.GetItemConfig():GetCollectible(pickups[i].SubType).Quality == 1 then
-                    Isaac.Spawn(EntityType.ENTITY_PICKUP, PickupVariant.PICKUP_COLLECTIBLE, pickups[i].SubType, pickups[i].Position, Vector.Zero, pickups[i])
-                    Isaac.GetPlayer(1):UseCard(Card.RUNE_BLACK, UseFlag.USE_NOANIM | UseFlag.USE_NOANNOUNCER)
-                else
-                    Isaac.Spawn(EntityType.ENTITY_PICKUP, PickupVariant.PICKUP_COLLECTIBLE, pickups[i].SubType,
-                        Game():GetRoom():FindFreePickupSpawnPosition(pickups[i].Position, dis, false, false), Vector.Zero, pickups[i])
-                end
-                return npc:Die()
             end
         end
         local entities = Isaac.FindInRadius(npc.Position, dis)
