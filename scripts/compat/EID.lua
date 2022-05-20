@@ -221,6 +221,13 @@ if EID then
 
     EID:addCollectible(mod.COLLECTIBLE_MOMENTUUM, "Throw it somewhere lol#Or hold with a card for funni#{{Blank}}#{{Warning}} Description isn't implemented yet")
     EID:addCollectible(mod.COLLECTIBLE_MOMENTUUM, "Кинь куда-нибудь лол#Или зажми с картой для прикола#{{Blank}}#{{Warning}} Описание ещё не добавлено", "Моментуум", "ru")
+    EID:addDescriptionModifier("AddMomentuumCardsCanSpawnDesc", function (descObj)
+        return descObj.fullItemString == "5.100." .. mod.COLLECTIBLE_MOMENTUUM
+    end, function(descObj)
+        local desc = mod._if(EID:getLanguage() == "ru", "Разблокировано Моментуум Карт: ", "Momentuum Cards Unlocked: ")
+        EID:appendToDescription(descObj, "#{{MomentuumMoon}} " .. desc .. #mod.keys(mod.Data.GlobalData.CardsCanSpawn) .. "/17")
+        return descObj
+    end)
     EID:addCollectible(mod.COLLECTIBLE_DREAMS_DREAM_BOOK_ACTIVE, "Gives charges every time you enter a special room#The number of charges you get depends on room type#When used spends charges and heals you#When held down for 2 seconds converts 3 charges to half a soul heart")
     EID:addCollectible(mod.COLLECTIBLE_DREAMS_DREAM_BOOK_ACTIVE, "Даёт заряды каждый раз, когда ты входишь в особую комнату#Количество зарядов, которые ты получишь, зависит от типа комнаты#При использовании тратит заряды и лечит тебя#При удерживании на 2 секунды конвертирует 3 заряда в половину сердца души", "Сонник", "ru")
     EID:addCollectible(mod.COLLECTIBLE_DREAMS_DREAM_BOOK_PASSIVE, "Gives charges every time you enter a special room#The number of charges you get depends on room type#Tries to automatically spend charges depending on the situation")
