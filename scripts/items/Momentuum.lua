@@ -114,7 +114,7 @@ function callbacks:MomentuumHolding(player)
         Momentuum.holdingTimer[num] = 0
         Momentuum.lastFrameHolded[num] = false
     end
-    if Momentuum.holdingTimer[num] == 60 * 1 then
+    if Momentuum.holdingTimer[num] == needHold then
         player:RemoveCollectible(mod.COLLECTIBLE_MOMENTUUM)
         AbsorbCard(player)
         if player:HasCollectible(CollectibleType.COLLECTIBLE_BOOK_OF_VIRTUES) then
@@ -284,7 +284,7 @@ function callbacks:MomentuumBehavior(npc)
         local pickups = Isaac.FindInRadius(npc.Position, dis, EntityPartition.PICKUP)
         for i = 1, #pickups do
             if pickups[i].Type == EntityType.ENTITY_PICKUP then
-                if pickups[i].Price ~= 0 then
+                if pickups[i].Price and pickups[i].Price ~= 0 then
                     local allPickups = Isaac.FindByType(EntityType.ENTITY_PICKUP)
                     for j = 1, #allPickups do
                         if allPickups[j]:ToPickup().Price ~= 0 then
