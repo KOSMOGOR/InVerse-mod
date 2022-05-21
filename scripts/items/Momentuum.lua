@@ -54,7 +54,7 @@ local function FindRooms(roomType, isClear)
         for _, j in pairs({ 0, 1, 13, 14 }) do
             local room = Game():GetLevel():GetRoomByIdx(rooms:Get(i).SafeGridIndex + j)
             if room and room.ListIndex ~= -1 and rooms:Get(room.ListIndex) and rooms:Get(room.ListIndex).Data.Type == roomType and (isClear == nil or isClear == rooms:Get(room.ListIndex).Clear) and not idxs[room.SafeGridIndex] then
-                table.insert(arr, room)
+                table.insert(arr, rooms:Get(room.ListIndex))
                 idxs[room.SafeGridIndex] = true
             end
         end
@@ -284,6 +284,7 @@ function callbacks:MomentuumBehavior(npc)
         local pickups = Isaac.FindInRadius(npc.Position, dis, EntityPartition.PICKUP)
         for i = 1, #pickups do
             if pickups[i].Type == EntityType.ENTITY_PICKUP then
+                pickups[i] = pickups[i]:ToPickup()
                 if pickups[i].Price and pickups[i].Price ~= 0 then
                     local allPickups = Isaac.FindByType(EntityType.ENTITY_PICKUP)
                     for j = 1, #allPickups do
@@ -861,6 +862,7 @@ end
 mod:AddCallback(ModCallbacks.MC_USE_CARD, callbacks.OnUseCard)
 
 function callbacks:OnNewLevel()
+    mod.Data.Cards.TheFool = nil
     for i = 0, Game():GetNumPlayers() - 1 do
         local player = Isaac.GetPlayer(i)
         local num = mod.GetPlayerNum(player)
@@ -929,27 +931,34 @@ function callbacks:OnUseMoon(_type, RNG, player, flags)
         return
     end
     local num = mod.GetPlayerNum(player)
-    for _, room in pairs(FindRooms(RoomType.ROOM_SECRET)) do
+    local rooms1 = FindRooms(RoomType.ROOM_SECRET)
+    for _, room in pairs(rooms1) do
+        print('s', room.VisitedCount, room.Clear, room.Data.Type == RoomType.ROOM_SECRET)
         if room.VisitedCount == 0 then
             player:AnimateTeleport(false)
             delayedPlay[SoundEffect.SOUND_HELL_PORTAL2] = 20
-            Game():GetLevel():ChangeRoom(room.GridIndex)
+            Game():GetLevel():ChangeRoom(room.SafeGridIndex)
             return
         end
     end
-    for _, room in pairs(FindRooms(RoomType.ROOM_SUPERSECRET)) do
+    local rooms2 = FindRooms(RoomType.ROOM_SUPERSECRET)
+    for _, room in pairs(rooms2) do
+        print('ss', room.VisitedCount, room.Clear, room.Data.Type == RoomType.ROOM_SUPERSECRET)
         if room.VisitedCount == 0 then
             player:AnimateTeleport(false)
             delayedPlay[SoundEffect.SOUND_HELL_PORTAL2] = 20
-            Game():GetLevel():ChangeRoom(room.GridIndex)
+            Game():GetLevel():ChangeRoom(room.SafeGridIndex)
             return
         end
     end
-    for _, room in pairs(FindRooms(RoomType.ROOM_ULTRASECRET)) do
+    local rooms3 = FindRooms(RoomType.ROOM_ULTRASECRET)
+    for _, room in pairs(rooms3) do
+        print('us', room.VisitedCount, room.Clear, room.Data.Type == RoomType.ROOM_ULTRASECRET)
         if room.VisitedCount == 0 then
             player:AnimateTeleport(false)
             delayedPlay[SoundEffect.SOUND_HELL_PORTAL2] = 20
-            Game():GetLevel():ChangeRoom(room.GridIndex)
+            Game():GetLevel():ChangeRoom(room.SafeGridIndex)
+            --Game():GetLevel():ChangeRoom(Game():GetLevel():QueryRoomTypeIndex(RoomType.ROOM_ULTRASECRET, false, RNG))
             if not player:HasCollectible(CollectibleType.COLLECTIBLE_CAR_BATTERY) then
                 player:RemoveCollectible(mod.COLLECTIBLE_MOON)
             end
