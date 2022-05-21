@@ -28,11 +28,11 @@ local MomentuumCardDesc = {
     ru = {
         [Card.CARD_FOOL] = "Использует {{Collectible419}}. Шанс 60% появиться в случайной комнате#Может появиться даже в запертой/неисследованной комнате",
         [Card.CARD_MAGICIAN] = "Даёт самонаводящиеся слёзы. Имеет шанс 40% сломаться в начале нового этажа",
-        [Card.CARD_HIGH_PRIESTESS] = "Каждую секунду Мама наступает на случайного врага#Когда в комнате никого не останется, вместо этого она начнёт топтать тебя",
-        [Card.CARD_EMPRESS] = "Если у тебя половина сердечка, то даёт {{Collectible360}} и {{Collectible698}}#В начале нового этажа опустошает тебя до половины сердечка. Работает даже на сердца души и чёрные сердца#Не работает на Хранителе",
+        [Card.CARD_HIGH_PRIESTESS] = "Каждую секунду Мама наступает на случайного врага#Когда в комнате никого не останется, вместо этого она начнёт топтать вас",
+        [Card.CARD_EMPRESS] = "Если у вас половина сердечка, то даёт {{Collectible360}} и {{Collectible698}}#В начале нового этажа опустошает вас до половины сердечка. Работает даже на сердца души и чёрные сердца#Не работает на Хранителе",
         [Card.CARD_EMPEROR] = "Открывает комнату Босса#После победы над боссом даёт два предмета на выбор#Если возможно, будет гарантированная сделка с эффект {{Collectible498}}",
-        [Card.CARD_HIEROPHANT] = "Если в комнате больше, чем 3 врага, карта превратит их в сердца души#Иначе даёт тебе 3 сердца души",
-        [Card.CARD_LOVERS] = "Конвертирует все твои сердца души и чёрные сердца на подобии {{Collectible296}}#Полностью тебя лечит#Если у тебя 0 красных контейнеров, вместо этого даёт 3 сердца души",
+        [Card.CARD_HIEROPHANT] = "Если в комнате больше, чем 3 врага, карта превратит их в сердца души#Иначе даёт вам 3 сердца души",
+        [Card.CARD_LOVERS] = "Конвертирует все твои сердца души и чёрные сердца на подобии {{Collectible296}}#Полностью вас лечит#Если у вас 0 красных контейнеров, вместо этого даёт 3 сердца души",
         [Card.CARD_CHARIOT] = "Да конца этажа даёт {{Collectible172}}#В каждой незачищенной комнате использует {{Collectible298}}",
         [Card.CARD_JUSTICE] = "Все ваши монеты, ключи и бомбы равны максимальному из значений",
         [Card.CARD_HERMIT] = "Раскрывает и открывает магазин #При заходе в магазин рероллит предметы с эффектом {{Collectible402}}",
@@ -70,7 +70,7 @@ local MomCardTarotDesc = {
     },
     ru = {
         [Card.CARD_FOOL] = "Использует {{Collectible419}}. Шанс {{ColorGold}}80%{{CR}} появиться в случайной комнате#Может появиться даже в запертой/неисследованной комнате",
-        [Card.CARD_HIGH_PRIESTESS] = "Каждые {{ColorGold}}полсекунды{{CR}} Мама наступает на случайного врага#Когда в комнате никого не останется, вместо этого она начнёт топтать тебя",
+        [Card.CARD_HIGH_PRIESTESS] = "Каждые {{ColorGold}}полсекунды{{CR}} Мама наступает на случайного врага#Когда в комнате никого не останется, вместо этого она начнёт топтать вас",
         [Card.CARD_EMPEROR] = MomentuumCardDesc.ru[Card.CARD_EMPEROR] .. "#{{Collectible451}} Даёт эффект {{Collectible588}} на весь этаж",
         [Card.CARD_HIEROPHANT] = MomentuumCardDesc.ru[Card.CARD_HIEROPHANT] .. "#{{Collectible451}} ↑+2 сердца души",
         [Card.CARD_LOVERS] = MomentuumCardDesc.ru[Card.CARD_LOVERS] .. "#{{Collectible451}} Перед конвертацией даёт 1 сердце души",
@@ -96,7 +96,7 @@ local MomTrinketMomsBoxDesc = {
     },
     ru = {
         [Card.CARD_MAGICIAN] = "Даёт самонаводящиеся слёзы. Имеет шанс {{ColorGold}}20%{{CR}} сломаться в начале нового этажа",
-        [Card.CARD_EMPRESS] = "{{ColorGold}}Всегда{{CR}} даёт {{Collectible360}} и {{Collectible698}}#В начале нового этажа опустошает тебя до половины сердечка. Работает даже на сердца души и чёрные сердца#Не работает на Хранителе",
+        [Card.CARD_EMPRESS] = "{{ColorGold}}Всегда{{CR}} даёт {{Collectible360}} и {{Collectible698}}#В начале нового этажа опустошает вас до половины сердечка. Работает даже на сердца души и чёрные сердца#Не работает на Хранителе",
         [Card.CARD_HERMIT] = MomentuumCardDesc.en[Card.CARD_HERMIT] .. "#{{Collectible439}} Если в магазине продаётся карта, то рероллит её на случайную открытую Моментуум Карту",
         [Card.CARD_DEVIL] = "В каждой незачщиненной комнате даёт эффект {{Collectible34}}#При получении урона имеет {{ColorGold}}10%{{CR}} шанс сломаться",
         [Card.CARD_SUN] = "Если при получении урона осталось 1/2 красного здоровья или меньше, использует карту \"Солнце\" и даёт разбитое сердце#При активации имеет {{ColorGold}}20%{{CR}} шанс сломаться"
@@ -229,9 +229,9 @@ if EID then
         return descObj
     end)
     EID:addCollectible(mod.COLLECTIBLE_DREAMS_DREAM_BOOK_ACTIVE, "Gives charges every time you enter a special room#The number of charges you get depends on room type#When used spends charges and heals you#When held down for 2 seconds converts 3 charges to half a soul heart")
-    EID:addCollectible(mod.COLLECTIBLE_DREAMS_DREAM_BOOK_ACTIVE, "Даёт заряды каждый раз, когда ты входишь в особую комнату#Количество зарядов, которые ты получишь, зависит от типа комнаты#При использовании тратит заряды и лечит тебя#При удерживании на 2 секунды конвертирует 3 заряда в половину сердца души", "Сонник", "ru")
+    EID:addCollectible(mod.COLLECTIBLE_DREAMS_DREAM_BOOK_ACTIVE, "Даёт заряды каждый раз, когда вы входишь в особую комнату#Количество зарядов, которые вы получишь, зависит от типа комнаты#При использовании тратит заряды и лечит вас#При удерживании на 2 секунды конвертирует 3 заряда в половину сердца души", "Сонник", "ru")
     EID:addCollectible(mod.COLLECTIBLE_DREAMS_DREAM_BOOK_PASSIVE, "Gives charges every time you enter a special room#The number of charges you get depends on room type#Tries to automatically spend charges depending on the situation")
-    EID:addCollectible(mod.COLLECTIBLE_DREAMS_DREAM_BOOK_PASSIVE, "Даёт заряды каждый раз, когда ты входишь в особую комнату#Количество зарядов, которые ты получишь, зависит от типа комнаты#Старается автоматически тратить заряды в зависимости от ситуации", "Сонник", "ru")
+    EID:addCollectible(mod.COLLECTIBLE_DREAMS_DREAM_BOOK_PASSIVE, "Даёт заряды каждый раз, когда вы входишь в особую комнату#Количество зарядов, которые вы получишь, зависит от типа комнаты#Старается автоматически тратить заряды в зависимости от ситуации", "Сонник", "ru")
     EID:addCollectible(mod.COLLECTIBLE_GLITCHED_DECK, "Momentuum Cards can spawn naturally#Only unlocked Momentuum Cards can spawn")
     EID:addCollectible(mod.COLLECTIBLE_GLITCHED_DECK, "Моментуум Карты могут появиться естественным образом#Только открытые Моментуум Карты могут появиться", "Глюкнутая колода", "ru")
     EID:addCollectible(mod.COLLECTIBLE_MOON, MomentuumMoonDesc.en)
