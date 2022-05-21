@@ -64,7 +64,7 @@ Don't be greedy! Trying to use Pilfer wile having 4 soul hearts or more will ins
     [*]Sanio - Just a cool guy.
 [/list]</description>
     <version>1.1</version>
-    <visibility>Private</visibility>
+    <visibility>Public</visibility>
     <tag id="Lua"/>
     <tag id="Items"/>
     <tag id="Active Items"/>
