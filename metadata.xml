@@ -2,10 +2,69 @@
 <metadata>
     <name>InVerse</name>
     <directory>inverse</directory>
-    <id>0</id>
-    <description></description>
-    <version>1.0</version>
-    <visibility>Public</visibility>
+    <id>2810781873</id>
+    <description>[b]Quick note:[/b] PLEASE do not confuse her with other &quot;Dreams&quot; of this world. The character is fully original. Thank you!
+
+[h1] Dream - the new character [/h1]
+
+Dream start with lower than average stats and 2 new items:
+
+[b]Momentuum[/b] - a throwable 1-time use item that can do almost anything! The effect of item depends on where it landed. The most common examples are:
+[list]
+    [*]Any wall - Mama Mega explosion for current room.
+    [*]Any item - Voids or duplicates ir depending on item quality.
+    [*]Any shop item (even Devil Deals) - Makes all items in current room free.
+    [*]Any door - Unlocks it (even special ones!)
+[/list]
+As wel as a TON of not so obvious effects that you have to find for yourself!
+
+[b]Dream's Dream Book[/b] (what a nice name)
+[i]Actually there's 2 Dream Books...[/i] But Dream holds a special passive one. The active version can spawn naturally in treasure rooms and libraries.
+Dream's Dream Book lets you to store &quot;Heart Charges&quot;. Charges are given whenever you first visit a special room.
+Each Heart Charge can heal you for a half a heart.
+If you don't like that you can save up 3 Heart Charges and convert them into half of soul heart. [strike](Dark bum at home)[/strike]
+The Dream's special book does everything automatically.
+
+[b]And if you thought that that's it - think again![/b]
+[h1] New mechanic: Momentuum Cards [/h1]
+
+Momentuum Cards can be crafted with Momentuum while holding one of tarot cards. Just hold Momentuum for 3 seconds and you will unlock a new Momentuum Card.
+Momentuum Cards are much stronger versions of original cards.
+[i]Note: only basic tarot cards for now are implemented. Trying to craft with other consumables will give you a random Momentuum Card instead.[/i]
+Once you craft a new card it can start to spawn naturally in later runs. But only as Dream.
+Once you craft at least 3 cards a new item is unlocked. I recommend to find it for yourself!
+
+[h1] Tainted Dream [/h1] 
+
+[iWarning! The character isn't fully implemented yet and will be reworked in future updates![/i]
+
+Tainted Dream has 2 forms: Soul and Body and start with a new pocket item: Pilfer. She is a soul heart only character.
+If t. Dream has only half a heart she transforms into Soul. The Soul has better stats and all benefits from beign the Lost.
+If she has more than half a heart she transforms into Body allowing not to die in one hit.
+But be careful! The Body is gradually decaying, slowly taking all of her hearts. 
+
+[b]Pilfer[/b]
+Upon Ð³se creates aura around t. Dream. The aura marks all enemies it touches
+When aura disappears all marked enemies take damage giving you half a soul heart each.
+Don't be greedy! Trying to use Pilfer wile having 4 soul hearts or more will instantly kill the Body leaving you with a half a heart. But in that case all enemies in the room will take damage either depending on how much health you wasted. Killed by that damage enemies will give you back a soul heart.
+
+[h1] Other things [/h1]
+
+[list]
+    [*]Birthright implemented for both characters.
+    [*]EID support.
+    [*]POG mod support.
+[/list]
+
+[h1] Special Thanks [/h1]
+
+[list]
+    [*]KOSMOGOR - all of the mods coding.
+    [*]SGT-X - Character portraits sketches.
+    [*]Sanio - Just a cool guy.
+[/list]</description>
+    <version>1.1</version>
+    <visibility>Private</visibility>
     <tag id="Lua"/>
     <tag id="Items"/>
     <tag id="Active Items"/>
