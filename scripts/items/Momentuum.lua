@@ -54,7 +54,7 @@ local function FindRooms(roomType, isClear)
         for _, j in pairs({ 0, 1, 13, 14 }) do
             local room = Game():GetLevel():GetRoomByIdx(rooms:Get(i).SafeGridIndex + j)
             if room and room.ListIndex ~= -1 and rooms:Get(room.ListIndex) and rooms:Get(room.ListIndex).Data.Type == roomType and (isClear == nil or isClear == rooms:Get(room.ListIndex).Clear) and not idxs[room.SafeGridIndex] then
-                table.insert(arr, rooms:Get(room.ListIndex))
+                table.insert(arr, room)
                 idxs[room.SafeGridIndex] = true
             end
         end
@@ -933,7 +933,7 @@ function callbacks:OnUseMoon(_type, RNG, player, flags)
     local num = mod.GetPlayerNum(player)
     local rooms1 = FindRooms(RoomType.ROOM_SECRET)
     for _, room in pairs(rooms1) do
-        print('s', room.VisitedCount, room.Clear, room.Data.Type == RoomType.ROOM_SECRET)
+        --print('s', room.VisitedCount, room.Clear, room.Data.Type == RoomType.ROOM_SECRET)
         if room.VisitedCount == 0 then
             player:AnimateTeleport(false)
             delayedPlay[SoundEffect.SOUND_HELL_PORTAL2] = 20
@@ -943,7 +943,7 @@ function callbacks:OnUseMoon(_type, RNG, player, flags)
     end
     local rooms2 = FindRooms(RoomType.ROOM_SUPERSECRET)
     for _, room in pairs(rooms2) do
-        print('ss', room.VisitedCount, room.Clear, room.Data.Type == RoomType.ROOM_SUPERSECRET)
+        --print('ss', room.VisitedCount, room.Clear, room.Data.Type == RoomType.ROOM_SUPERSECRET)
         if room.VisitedCount == 0 then
             player:AnimateTeleport(false)
             delayedPlay[SoundEffect.SOUND_HELL_PORTAL2] = 20
@@ -953,7 +953,7 @@ function callbacks:OnUseMoon(_type, RNG, player, flags)
     end
     local rooms3 = FindRooms(RoomType.ROOM_ULTRASECRET)
     for _, room in pairs(rooms3) do
-        print('us', room.VisitedCount, room.Clear, room.Data.Type == RoomType.ROOM_ULTRASECRET)
+        --print('us', room.VisitedCount, room.Clear, room.Data.Type == RoomType.ROOM_ULTRASECRET)
         if room.VisitedCount == 0 then
             player:AnimateTeleport(false)
             delayedPlay[SoundEffect.SOUND_HELL_PORTAL2] = 20
