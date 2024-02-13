@@ -4,34 +4,35 @@ local callbacks = {}
 mod.PLAYER_DREAMBSOUL = Isaac.GetPlayerTypeByName('DreamBSoul', true)
 mod.PLAYER_DREAMBBODY = Isaac.GetPlayerTypeByName('DreamBBody', true)
 mod.COLLECTIBLE_PILFER = Isaac.GetItemIdByName('Pilfer')
+mod.COLLECTIBLE_FILPER = Isaac.GetItemIdByName('Filper')
 mod.SOUND_PILFER_AURA = Isaac.GetSoundIdByName('PilferAura')
 mod.SOUND_PILFER_METKA = Isaac.GetSoundIdByName('PilferMetka')
 
 local pilfer = {
-    Active = {nil, nil, nil, nil, nil, nil, nil, nil},
+    Active = {},
     MetkaVariant = Isaac.GetEntityVariantByName('Metka'),
     AuraVariant = Isaac.GetEntityVariantByName('PilferAura'),
-    Aura = {nil, nil, nil, nil, nil, nil, nil, nil},
-    Aura2 = {nil, nil, nil, nil, nil, nil, nil, nil},
+    Aura = {},
+    Aura2 = {},
     lastRoom = nil
 }
 
-local corpse = {nil, nil, nil, nil, nil, nil, nil, nil}
+local corpse = {}
 local markedEnemies = {}
 local heartsMelting = {}
 for i = 1, 8 do
     markedEnemies[i] = {}
     heartsMelting[i] = 0
 end
-local BRFamiliar = {nil, nil, nil, nil, nil, nil, nil, nil}
+local BRFamiliar = {}
 local PlayerUsedPilfer = nil
 
 mod.Characters[mod.PLAYER_DREAMBSOUL] = {
     Hair = Isaac.GetCostumeIdByPath('gfx/characters/t_dre_ghost_hair.anm2'),
     DAMAGE = 0,
     DAMAGE_MULT = 1.2,
-    FIREDELAY = 1,
-    SPEED = 0.15,
+    FIREDELAY = 1.1,
+    SPEED = 0,
     SHOTSPEED = 0.25,
     TEARHEIGHT = -2,
     TEARFALLINGSPEED = 0.2,
@@ -42,8 +43,8 @@ mod.Characters[mod.PLAYER_DREAMBSOUL] = {
 }
 mod.Characters[mod.PLAYER_DREAMBBODY] = {
     Hair = Isaac.GetCostumeIdByPath('gfx/characters/t_dre_hair.anm2'),
-    DAMAGE = -0.4,
-    DAMAGE_MULT = 1,
+    DAMAGE = 0,
+    DAMAGE_MULT = 0.8,
     FIREDELAY = 0.9,
     SPEED = 0,
     SHOTSPEED = 0.25,
@@ -100,10 +101,12 @@ end
 
 function callbacks:OnPlayerUpdate(player)
     local num = mod.GetPlayerNum(player)
+    if player:GetPlayerType() == mod.PLAYER_DREAMBSOUL and not player:HasCollectible(mod.COLLECTIBLE_PILFER) then
+        player:SetPocketActiveItem(mod.COLLECTIBLE_PILFER)
+    elseif player:GetPlayerType() == mod.PLAYER_DREAMBBODY and not player:HasCollectible(mod.COLLECTIBLE_FILPER) then
+        player:SetPocketActiveItem(mod.COLLECTIBLE_FILPER)
+    end
     if player:GetPlayerType() == mod.PLAYER_DREAMBSOUL or player:GetPlayerType() == mod.PLAYER_DREAMBBODY then
-        if not player:HasCollectible(mod.COLLECTIBLE_PILFER) then
-            player:SetPocketActiveItem(mod.COLLECTIBLE_PILFER)
-        end
         local HeartContainers = player:GetMaxHearts()
         if HeartContainers > 0 then
             player:AddMaxHearts(-HeartContainers)
@@ -118,6 +121,7 @@ function callbacks:OnPlayerUpdate(player)
     if player:GetPlayerType() == mod.PLAYER_DREAMBBODY then
         heartsMelting[num] = heartsMelting[num] + 1
         local heartsAdd = mod._if(player:HasCollectible(CollectibleType.COLLECTIBLE_BIRTHRIGHT), 2, 0)
+        local remain = MeltingHeartsTime(player:GetSoulHearts() + heartsAdd) * 60 - heartsMelting[num]
         if player:GetSoulHearts() == 1 then
             SFXManager():Play(SoundEffect.SOUND_ISAACDIES)
             player:ChangePlayerType(mod.PLAYER_DREAMBSOUL)
@@ -134,9 +138,19 @@ function callbacks:OnPlayerUpdate(player)
                 corpse[num]:Remove()
             end
             corpse[num] = ent
-        elseif heartsMelting[num] >= MeltingHeartsTime(player:GetSoulHearts() + heartsAdd) * 60 then
-            player:AddSoulHearts(-1)
-            heartsMelting[num] = 0
+        elseif remain <= 90 then
+            if remain <= 35 and math.floor(remain) % 7 == 0 then
+                local color = Color(0.7, 0, 0, 1, 0.8, 0, 0)
+                player:SetColor(color, 2, 1, false, false)
+            else
+                local c = 0.3 + (remain / 90) * 0.55
+                local color = Color(1, c, c, 1, (1 - c) * 0.1, 0, 0)
+                player:SetColor(color, 2, 2, false, false)
+            end
+            if remain <= 0 then
+                player:TakeDamage(1, DamageFlag.DAMAGE_INVINCIBLE | DamageFlag.DAMAGE_NO_MODIFIERS, EntityRef(player), 0)
+                heartsMelting[num] = 0
+            end
         end
     elseif player:GetPlayerType() == mod.PLAYER_DREAMBSOUL then
         if player:GetSoulHearts() > 1 then
@@ -168,13 +182,20 @@ mod:AddCallback(ModCallbacks.MC_POST_GAME_STARTED, callbacks.OnGameStart)
 
 function callbacks:OnUsePilfer(_type, RNG, player)
     local num = mod.GetPlayerNum(player)
-    if player:GetSoulHearts() < 8 or player:GetPlayerType() ~= mod.PLAYER_DREAMBBODY then
-        pilfer.Active[num] = Isaac.GetFrameCount()
+    if pilfer.Active[num] then
+        return false
+    end
+    local soulFactor = math.min(7 * player:GetSoulHearts(), 84)
+    local stageFactor = math.min(6 * (Game():GetLevel():GetAbsoluteStage() - 1), 60)
+    local rand = mod.rand(1, 100) <= soulFactor + stageFactor
+    if player:HasCollectible(mod.COLLECTIBLE_PILFER) or not rand then
+        pilfer.Active[num] = Game():GetFrameCount()
         if pilfer.Aura[num] then
             pilfer.Aura[num]:Remove()
         end
         pilfer.Aura[num] = Isaac.Spawn(1000, pilfer.AuraVariant, 0, player.Position - Vector(0, 20), Vector.Zero, player):ToEffect()
         pilfer.Aura[num]:FollowParent(player)
+        pilfer.Aura[num].SpriteScale = Vector(1, 1) * mod._if(player:HasCollectible(mod.COLLECTIBLE_PILFER), 1, 0.65)
         if BRFamiliar[num] and BRFamiliar[num]:Exists() then
             if pilfer.Aura2[num] then
                 pilfer.Aura2[num]:Remove()
@@ -184,8 +205,8 @@ function callbacks:OnUsePilfer(_type, RNG, player)
             pilfer.Aura2[num].SpriteScale = Vector(0.75, 0.75)
         end
         SFXManager():Play(mod.SOUND_PILFER_AURA)
-    elseif player:GetPlayerType() == mod.PLAYER_DREAMBBODY then
-        local dmg = (player:GetSoulHearts() - 1) * player.Damage / 4
+    else
+        local dmg = 40 --(player:GetSoulHearts() - 1) * player.Damage / 4
         player:AddSoulHearts(-player:GetSoulHearts() + 1)
         local entities = Game():GetRoom():GetEntities()
         for i = 0, #entities - 1 do
@@ -193,6 +214,11 @@ function callbacks:OnUsePilfer(_type, RNG, player)
             if entity:IsVulnerableEnemy() then
                 PlayerUsedPilfer = num
                 entity:TakeDamage(dmg, 0, EntityRef(player), 0)
+                local angle = mod.rand(1, 360)
+                local x = math.cos(math.rad(angle))
+                local y = math.sin(math.rad(angle))
+                local pickup = Isaac.Spawn(EntityType.ENTITY_PICKUP, PickupVariant.PICKUP_HEART, HeartSubType.HEART_HALF_SOUL, entity.Position, Vector(2 * x, 2 * y), nil):ToPickup()
+                pickup.Timeout = 45
             end
         end
         SFXManager():Play(SoundEffect.SOUND_DEATH_CARD)
@@ -202,12 +228,13 @@ function callbacks:OnUsePilfer(_type, RNG, player)
     end
 end
 mod:AddCallback(ModCallbacks.MC_USE_ITEM, callbacks.OnUsePilfer, mod.COLLECTIBLE_PILFER)
+mod:AddCallback(ModCallbacks.MC_USE_ITEM, callbacks.OnUsePilfer, mod.COLLECTIBLE_FILPER)
 
 function callbacks:OnPilferUpdate(player)
     local num = mod.GetPlayerNum(player)
     local entities = Isaac.GetRoomEntities()
     if pilfer.Active[num] then
-        local dis = 80
+        local dis = mod._if(player:HasCollectible(mod.COLLECTIBLE_PILFER), 80, 60)
         for i = 1, #entities do
             local ent = entities[i]
             if (ent.Position:Distance(player.Position) <= dis or BRFamiliar[num] and ent.Position:Distance(BRFamiliar[num].Position) <= dis * 0.75) and
@@ -227,7 +254,8 @@ function callbacks:OnPilferUpdate(player)
                 markedEnemies[num][ind] = nil
             end
         end
-        if Isaac.GetFrameCount() - pilfer.Active[num] >= 2 * 60 then
+        if Game():GetFrameCount() - pilfer.Active[num] >= mod._if(player:HasCollectible(mod.COLLECTIBLE_PILFER), 90, 60) or 
+            Game():GetFrameCount() - pilfer.Active[num] >= 10 and player:GetActiveItem(2) == mod.COLLECTIBLE_PILFER and Input.IsActionPressed(ButtonAction.ACTION_PILLCARD, player.ControllerIndex) then
             local doSnd = false
             pilfer.Active[num] = false
             for _, i in pairs(markedEnemies[num]) do
@@ -322,7 +350,7 @@ mod:AddCallback(ModCallbacks.MC_POST_PLAYER_UPDATE, callbacks.CheckBRFamiliar)
 
 function callbacks:OnTakeDmg(entity, damageAmount, damageFlags, damageSource, damageCountdownFrames)
     if entity:IsVulnerableEnemy() and --[[entity:HasMortalDamage()]]entity.HitPoints - damageAmount <= 0 and PlayerUsedPilfer then
-        Isaac.GetPlayer(PlayerUsedPilfer):AddSoulHearts(2)
+        --Isaac.GetPlayer(PlayerUsedPilfer):AddSoulHearts(2)
     end
 end
 mod:AddCallback(ModCallbacks.MC_ENTITY_TAKE_DMG, callbacks.OnTakeDmg)

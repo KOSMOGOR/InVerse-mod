@@ -149,7 +149,7 @@ local function IsMomentuumTrinket(descObj)
     })[descObj.ObjSubType]
 end
 local function IsMomentuumCard(descObj)
-    return Isaac.GetCardIdByName("mom_fool") <= descObj.ObjSubType and descObj.ObjSubType <= Isaac.GetCardIdByName("mom_world")
+    return Isaac.GetCardIdByName("mom_fool") >= descObj.ObjSubType and descObj.ObjSubType <= Isaac.GetCardIdByName("mom_world")
 end
 local function IsCardCanBeMomentued(descObj)
     return HasMomentuum(descObj) and descObj.ObjType == 5 and descObj.ObjVariant == 300 and (MomentuumCardDesc.en[descObj.ObjSubType] or MomentuumCardDesc.en[descObj.ObjSubType - 55])

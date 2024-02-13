@@ -5,17 +5,23 @@ mod.COLLECTIBLE_DREAMS_DREAM_BOOK_PASSIVE = Isaac.GetItemIdByName("Dream's Dream
 mod.COLLECTIBLE_DREAMS_DREAM_BOOK_ACTIVE = Isaac.GetItemIdByName("Dream's Dream Book")
 
 local chargeBars = {}
-for i = 1, 8 do
-    chargeBars[i] = Sprite()
-    chargeBars[i]:Load("gfx/chargebar.anm2", true)
-    chargeBars[i].PlaybackSpeed = 0.5
-end
-local holdingTimer = {0, 0, 0, 0, 0, 0, 0, 0}
-local lastFrameHolded = {false, false, false, false, false, false, false, false}
-local pause = {0, 0, 0, 0, 0, 0, 0, 0}
+local holdingTimer = {}
+local lastFrameHolded = {}
+local pause = {}
 local needHold = 60 * 2
-local needHeal = {nil, nil, nil, nil, nil, nil, nil, nil}
-local needHealBlue = {nil, nil, nil, nil, nil, nil, nil, nil}
+local needHeal = {}
+local needHealBlue = {}
+function callbacks:SDVDreamBook(player) -- Set Defaul Values
+    local num = mod.GetPlayerNum(player)
+    if holdingTimer[num] == nil then holdingTimer[num] = 0 end
+    if pause[num] == nil then pause[num] = 0 end
+    if chargeBars[num] == nil then
+        chargeBars[num] = Sprite()
+        chargeBars[num]:Load("gfx/chargebar.anm2", true)
+        chargeBars[num].PlaybackSpeed = 0.5
+    end
+end
+mod:AddCallback(ModCallbacks.MC_POST_PLAYER_UPDATE, callbacks.SDVDreamBook)
 
 function callbacks:AddDreamBookCharges()
     for num = 1, Game():GetNumPlayers() do
@@ -90,7 +96,7 @@ function callbacks:DreamBookHolding(player)
             lastFrameHolded[num] = true
             holdingTimer[num] = 0
         end
-    elseif not Input.IsButtonPressed(ButtonAction.ACTION_ITEM, player.ControllerIndex) then
+    elseif not Input.IsActionPressed(ButtonAction.ACTION_ITEM, player.ControllerIndex) then
         if 0 < holdingTimer[num] and holdingTimer[num] <= 10 then
             if HealPlayer(player) then
                 player:AnimateCollectible(mod.COLLECTIBLE_DREAMS_DREAM_BOOK_ACTIVE, "Pickup", "PlayerPickupSparkle")
@@ -153,6 +159,7 @@ mod:AddCallback(ModCallbacks.MC_POST_PLAYER_UPDATE, callbacks.DreamBookConsumeCh
 
 function callbacks:RenderChargeBar(player, offset)
     local num = mod.GetPlayerNum(player)
+    if not holdingTimer[num] then return end
     if holdingTimer[num] > 10 and holdingTimer[num] < needHold then
         local perc = math.floor(100.0 * holdingTimer[num] / needHold)
         if perc < 99 then
@@ -171,20 +178,17 @@ f:Load("font/terminus.fnt")
 local spr = Sprite()
 spr:Load("gfx/ui/DreamBook_Render.anm2", true)
 spr:Play("Idle")
-function callbacks:RenderDreamBookCharges(player, offset)
-    local num = mod.GetPlayerNum(player)
-    if player:HasCollectible(mod.COLLECTIBLE_DREAMS_DREAM_BOOK_PASSIVE) or player:HasCollectible(mod.COLLECTIBLE_DREAMS_DREAM_BOOK_ACTIVE) then
-        local y = 0
-        for i = 0, Game():GetNumPlayers() - 1 do
-            if player.Index == Isaac.GetPlayer(i).Index then
-                break
-            elseif Isaac.GetPlayer(i):HasCollectible(mod.COLLECTIBLE_DREAMS_DREAM_BOOK_ACTIVE) or Isaac.GetPlayer(i):HasCollectible(mod.COLLECTIBLE_DREAMS_DREAM_BOOK_PASSIVE) then
-                y = y + 15
-            end
+function callbacks:RenderDreamBookCharges()
+    local y = 0
+    for i = 0, Game():GetNumPlayers() - 1 do
+        local player = Isaac.GetPlayer(i)
+        local num = mod.GetPlayerNum(player)
+        if (player:HasCollectible(mod.COLLECTIBLE_DREAMS_DREAM_BOOK_PASSIVE) or player:HasCollectible(mod.COLLECTIBLE_DREAMS_DREAM_BOOK_ACTIVE)) and Game():GetHUD():IsVisible() then
+            spr:Render(Vector(45 + 20 * Options.HUDOffset, 35 + 12 * Options.HUDOffset + y), Vector.Zero, Vector.Zero)
+            f:DrawStringScaled("x" .. (mod.Data.DreamBookCharges[num] or 0), 55 + 20 * Options.HUDOffset, 30 + 12 * Options.HUDOffset + y, 0.7, 0.7, KColor(1, 1, 1, 1), 0, true)
+            f:DrawStringScaled(num, 47 + 20 * Options.HUDOffset, 33 + 12 * Options.HUDOffset + y, 0.5, 0.5, KColor(1, 1, 1, 1), 0, true)
+            y = y + 15
         end
-        spr:Render(Vector(45 + 20 * Options.HUDOffset, 35 + 12 * Options.HUDOffset + y), Vector.Zero, Vector.Zero)
-        f:DrawStringScaled("x" .. (mod.Data.DreamBookCharges[num] or 0), 55 + 20 * Options.HUDOffset, 30 + 12 * Options.HUDOffset + y, 0.7, 0.7, KColor(1, 1, 1, 1), 0, true)
-        f:DrawStringScaled(num, 47 + 20 * Options.HUDOffset, 33 + 12 * Options.HUDOffset + y, 0.5, 0.5, KColor(1, 1, 1, 1), 0, true)
     end
 end
-mod:AddCallback(ModCallbacks.MC_POST_PLAYER_RENDER, callbacks.RenderDreamBookCharges)
+mod:AddCallback(ModCallbacks.MC_POST_RENDER, callbacks.RenderDreamBookCharges)

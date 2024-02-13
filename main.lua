@@ -1,5 +1,5 @@
-local mod = RegisterMod("InVerse", 1)
-InVerse = mod
+InVerse = RegisterMod("InVerse", 1)
+local mod = InVerse
 
 --[[
 ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣠⣤⣤⣤⣤⣤⣶⣦⣤⣄⡀
@@ -274,24 +274,15 @@ mod:AddCallback(ModCallbacks.MC_EVALUATE_CACHE, mod.onCache)
 
 mod:AddCallback(ModCallbacks.MC_POST_UPDATE, function()
     local entities = Game():GetRoom():GetEntities()
-    --[[for i = 0, #entities - 1 do
-        local ent = entities:Get(i)
-        print(ent.Type, ent.Variant, ent.SubType, ent:GetSprite().Color.R, ent:GetSprite().Color.G, ent:GetSprite().Color.B)
-    end]]
-    --[[for i = 1, 500 do
-        if SFXManager():IsPlaying(i) then
-            print(i)
-        end
-    end]]
 end)
 
-dofile("scripts/misc/unlocks.lua")
+include("scripts.characters.Dream")
+include("scripts.characters.DreamB")
 
-dofile("scripts/characters/Dream")
-dofile("scripts/characters/DreamB")
+include("scripts.items.DreamBook")
+include("scripts.items.Momentuum")
 
-dofile("scripts/items/DreamBook")
-dofile("scripts/items/Momentuum")
+include("scripts.misc.unlocks")
 
-dofile("scripts/compat/EID.lua")
-dofile("scripts/compat/pog.lua")
+include("scripts.compat.EID")
+include("scripts.compat.pog")

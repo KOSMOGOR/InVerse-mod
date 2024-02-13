@@ -4,6 +4,7 @@
 	<active id="2" name="Momentuum" description="History's Piece" gfx="Momentuum.png" charges="0" quality="3" />
 	<active id="3" name="Momentuum-Moon" description="Face yourself" gfx="Momentuum-Moon.png" maxcharges="6" quality="2" />
 	<active id="4" name="Pilfer" description="The Universe accept your sacrifice" gfx="Pilfer.png" maxcharges="300" chargetype="timed" tags="nolostbr" quality="4" />
+	<active id="4" name="Filper" description="The Universe accept your sacrifice" gfx="Filper.png" maxcharges="450" chargetype="timed" tags="nolostbr" quality="4" />
 	<passive id="5" name="Glitched Deck" description="Load ItemDescription failed: ..." gfx="Glitched_Deck.png" tags="summonable" quality="2" />
 
 	<trinket gfx="mom_magician.png" name="Momentuum: I - The Magician" description="May your goals escort you" cache="tearcolor tearflag" />

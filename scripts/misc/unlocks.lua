@@ -7,6 +7,14 @@ local function ShowAchievment(text)
     SFXManager():Play(SoundEffect.SOUND_GOLDENKEY)
 end
 
+local function CheckCharacter(charType)
+    for i = 0, Game():GetNumPlayers() - 1 do
+        if Isaac.GetPlayer(i):GetPlayerType() == charType then
+            return true
+        end
+    end
+end
+
 function callbacks:OnUpdate()
     if not mod.Data.GlobalData.ItemsCanSpawn["Glitched Deck"] and #mod.keys(mod.Data.GlobalData.CardsCanSpawn) >= 3 then
         mod.Data.GlobalData.ItemsCanSpawn["Glitched Deck"] = true
@@ -124,5 +132,12 @@ mod:AddCallback(ModCallbacks.MC_POST_NEW_LEVEL, function()
         level:ChangeRoom(94)
         room:RemoveGridEntity(room:GetDoor(2):GetGridIndex(), 0)
         SpawnLayingDreamB()
+    end
+end)
+
+mod:AddCallback(ModCallbacks.MC_POST_NPC_DEATH, function(npc)
+    if npc.Type == EntityType.ENTITY_DELIRIUM and CheckCharacter(mod.PLAYER_DREAM) then
+        mod.Data.GlobalData.ItemsCanSpawn["Dream's Handbag"] = true
+        ShowAchievment("Dream's Handbag")
     end
 end)

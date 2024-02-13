@@ -20,25 +20,30 @@ mod.COLLECTIBLE_GLITCHED_DECK = Isaac.GetItemIdByName("Glitched Deck")
 mod.SOUND_MOMENTUUM_EXPLOSION = Isaac.GetSoundIdByName("MomentuumExplosion")
 local DinfBreakVariant = Isaac.GetEntityVariantByName("DinfinityBreak")
 local Momentuum = {
-    Active = { false, false, false, false, false, false, false, false },
+    Active = {},
     EntityType = Isaac.GetEntityTypeByName("Momentuum"),
     EntityVariant = Isaac.GetEntityVariantByName("Momentuum"),
     ExplosionVariant = Isaac.GetEntityVariantByName("MomentuumExplosion"),
-    lastRoom = nil,
-    holdingTimer = { 0, 0, 0, 0, 0, 0, 0, 0 },
-    lastFrameHolded = { false, false, false, false, false, false, false, false }
+    holdingTimer = {},
+    lastFrameHolded = {}
 }
 local delayedPlay = {}
 local needHold = 60
 local chargeBars = {}
-for i = 1, 8 do
-    chargeBars[i] = Sprite()
-    chargeBars[i]:Load("gfx/chargebar.anm2", true)
-    chargeBars[i].PlaybackSpeed = 0.5
+function callbacks:SDVMomentuum(player)
+    local num = mod.GetPlayerNum(player)
+    if Momentuum.holdingTimer[num] == nil then Momentuum.holdingTimer[num] = 0 end
+    if chargeBars[num] == nil then
+        chargeBars[num] = Sprite()
+        chargeBars[num]:Load("gfx/chargebar.anm2", true)
+        chargeBars[num].PlaybackSpeed = 0.5
+    end
 end
+mod:AddCallback(ModCallbacks.MC_POST_PLAYER_UPDATE, callbacks.SDVMomentuum)
+
 mod.TRINKET_MAGICIAN = Isaac.GetTrinketIdByName("Momentuum: I - The Magician")
 mod.TRINKET_EMPRESS = Isaac.GetTrinketIdByName("Momentuum: III - The Empress")
-local TrinketEmpress = { nil, nil, nil, nil, nil, nil, nil, nil }
+local TrinketEmpress = {}
 mod.TRINKET_HERMIT = Isaac.GetTrinketIdByName("Momentuum: IX - The Hermit")
 mod.NULL_STRENGTH = Isaac.GetItemIdByName("MomentuumStrengthNull")
 mod.TRINKET_DEVIL = Isaac.GetTrinketIdByName("Momentuum: XV - The Devil")
@@ -127,6 +132,7 @@ function callbacks:MomentuumHolding(player)
 end
 function callbacks:RenderChargeBar(player, offset)
     local num = mod.GetPlayerNum(player)
+    if not Momentuum.holdingTimer[num] then return end
     if Momentuum.holdingTimer[num] > 10 and Momentuum.holdingTimer[num] < needHold then
         local perc = math.floor(100.0 * Momentuum.holdingTimer[num] / needHold)
         if perc < 99 then
@@ -462,8 +468,7 @@ mod:AddCallback(ModCallbacks.MC_NPC_UPDATE, callbacks.MomentuumBehavior, Momentu
 mod:AddCallback(ModCallbacks.MC_POST_NPC_DEATH, callbacks.MomentuumDeath, Momentuum.EntityType)
 mod:AddCallback(ModCallbacks.MC_POST_PLAYER_UPDATE, callbacks.MomentuumRevive)
 mod:AddCallback(ModCallbacks.MC_ENTITY_TAKE_DMG, function(_, player, damageAmount, damageFlags, damageSource, damageCountdownFrames)
-    local num = mod.GetPlayerNum(player)
-    Momentuum.Active[num] = false
+    Momentuum.Active[mod.GetPlayerNum(player)] = false
 end, EntityType.ENTITY_PLAYER)
 mod:AddCallback(ModCallbacks.MC_POST_NEW_ROOM, function()
     for i = 1, 8 do Momentuum.Active[i] = false end
@@ -493,12 +498,12 @@ mod:AddCallback(ModCallbacks.MC_ENTITY_TAKE_DMG, callbacks.MomentuumWisps, Entit
 
 function callbacks:OnPlayerUpdate(player)
     local num = mod.GetPlayerNum(player)
-    if mod.Data.Players[num].Priestess and Isaac.GetFrameCount() - mod.Data.Players[num].Priestess >= 60 then
+    if mod.Data.Players[num].Priestess and Game():GetFrameCount() - mod.Data.Players[num].Priestess >= 60 then
         player:UseCard(Card.CARD_HIGH_PRIESTESS, UseFlag.USE_NOANIM | UseFlag.USE_NOANNOUNCER)
         if player:HasCollectible(CollectibleType.COLLECTIBLE_TAROT_CLOTH) then
             player:UseCard(Card.CARD_HIGH_PRIESTESS, UseFlag.USE_NOANIM | UseFlag.USE_NOANNOUNCER)
         end
-        mod.Data.Players[num].Priestess = Isaac.GetFrameCount()
+        mod.Data.Players[num].Priestess = Game():GetFrameCount()
     end
     if player:HasTrinket(mod.TRINKET_EMPRESS) and (player:GetHearts() + player:GetSoulHearts() <= 1 or player:HasCollectible(CollectibleType.COLLECTIBLE_MOMS_BOX)) then
         if TrinketEmpress[num] == nil or TrinketEmpress[num][1]:IsDead() or TrinketEmpress[num][2]:IsDead() or TrinketEmpress[num][3]:IsDead() then
@@ -660,7 +665,7 @@ function callbacks:OnUseCard(card, player, flags)
             mod.Data.Cards.TheFool = nil
         end
     elseif cardName == "Momentuum: II - The High Priestess" then
-        mod.Data.Players[num].Priestess = Isaac.GetFrameCount()
+        mod.Data.Players[num].Priestess = Game():GetFrameCount()
     elseif cardName == "Momentuum: IV - The Emperor" then
         --[[player:AddCollectible(CollectibleType.COLLECTIBLE_THERES_OPTIONS)
         player:AddCollectible(CollectibleType.COLLECTIBLE_EUCHARIST)
@@ -846,16 +851,10 @@ function callbacks:OnUseCard(card, player, flags)
     elseif cardName == "Momentuum: XXI - The World" then
         mod.AddTrinketAsItem(player, TrinketType.TRINKET_SHINY_ROCK)
         table.insert(mod.Data.Players[num].TrinketsRemoveNextFloor, TrinketType.TRINKET_SHINY_ROCK)
-        --[[player:AddCollectible(CollectibleType.COLLECTIBLE_MIND)
-        player:AddCollectible(CollectibleType.COLLECTIBLE_XRAY_VISION)
-        table.insert(mod.Data.Players[num].ItemsRemoveNextFloor, CollectibleType.COLLECTIBLE_MIND)
-        table.insert(mod.Data.Players[num].ItemsRemoveNextFloor, CollectibleType.COLLECTIBLE_XRAY_VISION)]]
         mod.AddItemForFloor(player, CollectibleType.COLLECTIBLE_MIND)
         mod.AddItemForFloor(player, CollectibleType.COLLECTIBLE_XRAY_VISION)
         if player:HasCollectible(CollectibleType.COLLECTIBLE_TAROT_CLOTH) then
-            --[[player:AddCollectible(CollectibleType.COLLECTIBLE_BLACK_CANDLE)
-            table.insert(mod.Data.Players[num].ItemsRemoveNextFloor, CollectibleType.COLLECTIBLE_BLACK_CANDLE)]]
-        mod.AddItemForFloor(player, CollectibleType.COLLECTIBLE_BLACK_CANDLE)
+            mod.AddItemForFloor(player, CollectibleType.COLLECTIBLE_BLACK_CANDLE)
         end
     end
 end

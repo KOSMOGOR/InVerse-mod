@@ -3,7 +3,7 @@
          nameimageroot="gfx/ui/boss/">
 	<player name="Dream" skin="Character_Dream.png" hp="4" armor="2"
             nameimage="playername_dream.png" portrait="Dream_portrait.png"
-            skinColor="2" birthright="Another one?">
+            skinColor="0" birthright="Another one?">
     </player>
 	<player name="DreamBSoul" skin="t_dre_ghost.png" hp="0" armor="1"
             nameimage="playername_dream.png" portrait="t_dre_portrait.png"
