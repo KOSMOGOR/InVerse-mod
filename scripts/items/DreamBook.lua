@@ -31,14 +31,14 @@ function callbacks:AddDreamBookCharges()
         local player = Isaac.GetPlayer(num - 1)
         if player:HasCollectible(mod.COLLECTIBLE_DREAMS_DREAM_BOOK_PASSIVE) or player:HasCollectible(mod.COLLECTIBLE_DREAMS_DREAM_BOOK_ACTIVE) then
             if Game():GetRoom():IsFirstVisit() then
-                local roomTypes = {2, 3, 4, 7, 8, 9, 10, 12, 14, 15, 17, 18, 19, 20, 21, 22, 24, 27, 29}
-                local roomCharges = {1, 4, 1, 2, 2, 1, 1, 2, 2, 3, 3, 2, 2, 3, 3, 4, 3, 1, 4}
-                for i, roomType in pairs(roomTypes) do
-                    if Game():GetRoom():GetType() == roomType then
-                        mod.Data.DreamBookCharges[num] = math.min(99, mod.Data.DreamBookCharges[num] + roomCharges[i] * mod._if(player:HasCollectible(mod.COLLECTIBLE_DREAMS_DREAM_BOOK_ACTIVE) and player:HasCollectible(CollectibleType.COLLECTIBLE_CAR_BATTERY), 2, 1))
-                        player:AnimateCollectible(mod.COLLECTIBLE_DREAMS_DREAM_BOOK_ACTIVE, "Pickup", "PlayerPickupSparkle")
-                        break
-                    end
+                local roomTypeTable = {
+                    [2] = 1, [3] = 4, [4] = 1, [7] = 2, [8] = 2, [9] = 1, [10] = 1, [12] = 2, [14] = 2, [15] = 3,
+                    [17] = 3, [18] = 2, [19] = 2, [20] = 3, [21] = 3, [22] = 4, [24] = 3, [27] = 1, [29] = 4
+                }
+                if roomTypeTable[Game():GetRoom():GetType()] then
+                    mod.Data.DreamBookCharges[num] = math.min(99, mod.Data.DreamBookCharges[num] + roomTypeTable[Game():GetRoom():GetType()] * mod._if(player:HasCollectible(mod.COLLECTIBLE_DREAMS_DREAM_BOOK_ACTIVE) and player:HasCollectible(CollectibleType.COLLECTIBLE_CAR_BATTERY), 2, 1))
+                    player:AnimateCollectible(mod.COLLECTIBLE_DREAMS_DREAM_BOOK_ACTIVE, "Pickup", "PlayerPickupSparkle")
+                    break
                 end
                 if Game():GetRoom():GetType() == 11 then
                     mod.Data.DreamBookCharges[num] = math.min(99, mod.Data.DreamBookCharges[num] + mod._if(Game():GetLevel():HasBossChallenge(), 2, 1) * mod._if(player:HasCollectible(mod.COLLECTIBLE_DREAMS_DREAM_BOOK_ACTIVE) and player:HasCollectible(CollectibleType.COLLECTIBLE_CAR_BATTERY), 2, 1))

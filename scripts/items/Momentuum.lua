@@ -339,62 +339,6 @@ function callbacks:MomentuumBehavior(npc)
                 return npc:Die()
             end
         end
-        --[[local entities = Isaac.GetRoomEntities()
-        for i = 1, #entities do
-            if entities[i].Position:Distance(npc.Position) <= dis then
-                if entities[i].Type == EntityType.ENTITY_GIDEON then
-                    Isaac.Spawn(EntityType.ENTITY_TEAR, TearVariant.CHAOS_CARD, 0, npc.Position, Vector.Zero, nil)
-                    return npc:Die()
-                elseif entities[i]:IsVulnerableEnemy() and not entities[i]:HasEntityFlags(EntityFlag.FLAG_FRIENDLY) then
-                    entities[i]:Kill()
-                    Isaac.GetPlayer(1):UseCard(Card.CARD_DEATH, UseFlag.USE_NOANIM | UseFlag.USE_NOANNOUNCER)
-                    return npc:Die()
-                elseif entities[i]:IsVulnerableEnemy() and entities[i]:HasEntityFlags(EntityFlag.FLAG_FRIENDLY) then
-                    Isaac.GetPlayer(1):UseActiveItem(CollectibleType.COLLECTIBLE_DELIRIOUS, UseFlag.USE_NOANIM | UseFlag.USE_NOCOSTUME)
-                    return npc:Die()
-                elseif entities[i].Type == EntityType.ENTITY_PICKUP and entities[i]:ToPickup().Price ~= 0 then
-                    for j = 1, #entities do
-                        if entities[j].Type == EntityType.ENTITY_PICKUP and entities[j].Price ~= 0 then
-                            entities[j]:ToPickup().Price = 0
-                        end
-                    end
-                    return npc:Die()
-                elseif entities[i].Type == EntityType.ENTITY_PICKUP and entities[i].Variant == PickupVariant.PICKUP_COLLECTIBLE then
-                    if entities[i].SubType == mod.COLLECTIBLE_DREAMS_DREAM_BOOK_ACTIVE then
-                        entities[i]:ToPickup():Morph(EntityType.ENTITY_PICKUP, PickupVariant.PICKUP_COLLECTIBLE, mod.COLLECTIBLE_DREAMS_DREAM_BOOK_PASSIVE)
-                    elseif ({
-                        [CollectibleType.COLLECTIBLE_DECK_OF_CARDS] = true,
-                        [CollectibleType.COLLECTIBLE_STARTER_DECK] = true,
-                        [CollectibleType.COLLECTIBLE_BOOSTER_PACK] = true
-                    })[entities[i].SubType] and #mod.keys(mod.Data.GlobalData.CardsCanSpawn) >= 3 then
-                        entities[i]:ToPickup():Morph(EntityType.ENTITY_PICKUP, PickupVariant.PICKUP_COLLECTIBLE, mod.COLLECTIBLE_GLITCHED_DECK)
-                        --mod.Data.GlobalData.ItemsCanSpawn["Glitched Deck"] = true
-                    elseif Isaac.GetItemConfig():GetCollectible(entities[i].SubType).Quality == 0 then
-                        Isaac.GetPlayer(1):UseCard(Card.RUNE_BLACK, UseFlag.USE_NOANIM | UseFlag.USE_NOANNOUNCER)
-                    elseif Isaac.GetItemConfig():GetCollectible(entities[i].SubType).Quality == 1 then
-                        Isaac.Spawn(EntityType.ENTITY_PICKUP, PickupVariant.PICKUP_COLLECTIBLE, entities[i].SubType, entities[i].Position, Vector.Zero, entities[i])
-                        Isaac.GetPlayer(1):UseCard(Card.RUNE_BLACK, UseFlag.USE_NOANIM | UseFlag.USE_NOANNOUNCER)
-                    else
-                        Isaac.Spawn(EntityType.ENTITY_PICKUP, PickupVariant.PICKUP_COLLECTIBLE, entities[i].SubType,
-                            Game():GetRoom():FindFreePickupSpawnPosition(entities[i].Position, dis, false, false), Vector.Zero, entities[i])
-                    end
-                    return npc:Die()
-                elseif entities[i].Type == EntityType.ENTITY_SHOPKEEPER then
-                    local player = Isaac.GetPlayer(1)
-                    mod.AddTrinketAsItem(player, TrinketType.TRINKET_RIB_OF_GREED)
-                    entities[i]:Kill()
-                    return npc:Die()
-                elseif entities[i].Type == EntityType.ENTITY_PLAYER and entities[i]:ToPlayer():GetPlayerType() == mod.PLAYER_DREAM and not npc:HasCommonParentWithEntity(entities[i])
-                    and (entities[i]:ToPlayer():GetActiveItem() == 0 or entities[i]:ToPlayer():HasCollectible(CollectibleType.COLLECTIBLE_SCHOOLBAG) and entities[i]:ToPlayer():GetActiveItem(ActiveSlot.SLOT_SECONDARY) == 0) and not entities[i]:ToPlayer():IsCoopGhost() then
-                    entities[i]:ToPlayer():AddCollectible(mod.COLLECTIBLE_MOMENTUUM)
-                    entities[i]:ToPlayer():AnimateCollectible(mod.COLLECTIBLE_MOMENTUUM)
-                    return npc:Remove()
-                elseif entities[i].Type == EntityType.ENTITY_PLAYER and not npc:HasCommonParentWithEntity(entities[i]) and not entities[i]:ToPlayer():IsCoopGhost() then
-                    entities[i]:ToPlayer():AddCollectible(CollectibleType.COLLECTIBLE_1UP)
-                    return npc:Die()
-                end
-            end
-        end]]
         for i = 0, 7 do
             local door = Game():GetRoom():GetDoor(i)
             if door and not door:IsOpen() and door.Position:Distance(npc.Position) <= dis * 1.5 then
