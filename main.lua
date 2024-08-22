@@ -89,6 +89,16 @@ else
     mod.Data.GlobalData = Copy(GlobalData)
 end
 
+function mod:OnGameStart(player)
+    local newGame = Game():GetFrameCount() == 0
+    if newGame then
+        local gd = Copy(mod.Data.GlobalData)
+        mod.Data = Copy(baseData)
+        mod.Data.GlobalData = gd
+    end
+end
+mod:AddCallback(ModCallbacks.MC_POST_PLAYER_INIT, mod.OnGameStart)
+
 local function SetDefaultValues(_, player)
     local num = player.InitSeed
     if not mod.Data.Players[num] then
@@ -105,7 +115,7 @@ mod:AddCallback(ModCallbacks.MC_POST_PLAYER_UPDATE, SetDefaultValues)
 
 function mod:SaveGame(ShouldSave)
     if ShouldSave then
-        -- mod:SaveData(json.encode(mod.Data))
+        mod:SaveData(json.encode(mod.Data))
     end
 end
 mod:AddCallback(ModCallbacks.MC_PRE_GAME_EXIT, mod.SaveGame)

@@ -114,10 +114,10 @@ function callbacks:GrabHunterKey(pickup, collider, low)
     if pickup.Variant == HunterKeyVariant or pickup.Variant == HunterKeyPartVariant then
         if pickup:GetSprite():IsPlaying("Collect") then return true end
         pickup:GetSprite():Play("Collect")
-        SFXManager():Play(
-            mod._if(pickup.Variant == HunterKeyVariant, SoundEffect.SOUND_GOLDENKEY, SoundEffect.SOUND_BONE_HEART)
-        )
         mod.Data.Tigro.keyShards = mod.Data.Tigro.keyShards + mod._if(pickup.Variant == HunterKeyVariant, 4, 1)
+        SFXManager():Play(
+            mod._if(pickup.Variant == HunterKeyVariant or mod.Data.Tigro.keyShards % 4 == 0, SoundEffect.SOUND_GOLDENKEY, SoundEffect.SOUND_BONE_HEART)
+        )
         RenderSincePickup = 0
         return true
     end
@@ -137,6 +137,17 @@ function callbacks:HunterKeyUpdate(pickup)
     end
 end
 mod:AddCallback(ModCallbacks.MC_POST_PICKUP_UPDATE, callbacks.HunterKeyUpdate)
+
+function callbacks:SpawnHunterKey(pickup, variant, subtype)
+    if variant ~= 30 then return end
+    local r = mod.rand(1, 1000)
+    if r <= 5 then
+        return {HunterKeyVariant, 0}
+    elseif r <= 250 + 5 then
+        return {HunterKeyPartVariant, 0}
+    end
+end
+mod:AddCallback(ModCallbacks.MC_POST_PICKUP_SELECTION, callbacks.SpawnHunterKey)
 
 local function IsActionHold(action)
     for i = 0, Game():GetNumPlayers() - 1 do
@@ -171,7 +182,7 @@ function callbacks:RenderDreamBookCharges()
         if RenderSincePickup > 120 then
             alpha = 1 - (RenderSincePickup - 120) / 30
         end
-        if tabHold >= 30 then
+        if tabHold >= 30 - 1 then
             tabHold = 30
             alpha = 1
             RenderSincePickup = 60
