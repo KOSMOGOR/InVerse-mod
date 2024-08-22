@@ -73,17 +73,8 @@ local json = require("json")
 
 local baseData = {
     Players = {},
-    Cards = {},
-    DreamBookCharges = { 0, 0, 0, 0, 0, 0, 0, 0 }
+    Cards = {}
 }
-for i = 1, 8 do
-    table.insert(baseData.Players, {
-        HaveBR = false,
-        ItemsRemoveNextFloor = {},
-        ItemsRemoveNextRoom = {},
-        TrinketsRemoveNextFloor = {}
-    })
-end
 local GlobalData = {
     CardsCanSpawn = {},
     TrinketsCanSpawn = {},
@@ -98,26 +89,27 @@ else
     mod.Data.GlobalData = Copy(GlobalData)
 end
 
+local function SetDefaultValues(_, player)
+    local num = player.InitSeed
+    if not mod.Data.Players[num] then
+        mod.Data.Players[num] = {
+            HaveBR = false,
+            ItemsRemoveNextFloor = {},
+            ItemsRemoveNextRoom = {},
+            TrinketsRemoveNextFloor = {}
+        }
+    end
+end
+mod:AddCallback(ModCallbacks.MC_POST_PLAYER_INIT, SetDefaultValues)
+mod:AddCallback(ModCallbacks.MC_POST_PLAYER_UPDATE, SetDefaultValues)
+
 function mod:SaveGame(ShouldSave)
     if ShouldSave then
-        mod:SaveData(json.encode(mod.Data))
+        -- mod:SaveData(json.encode(mod.Data))
     end
 end
 mod:AddCallback(ModCallbacks.MC_PRE_GAME_EXIT, mod.SaveGame)
 
-function mod:OnGameStart(player)
-    local isContinued = Game():GetFrameCount() ~= 0
-    if not isContinued and mod.GetPlayerNum(player) then
-        local gd = Copy(mod.Data.GlobalData)
-        mod.Data = Copy(baseData)
-        for num = 1, Game():GetNumPlayers() do
-            local player = Isaac.GetPlayer(num - 1)
-            mod.Data.Players[num].HaveBR = player:HasCollectible(CollectibleType.COLLECTIBLE_BIRTHRIGHT)
-        end
-        mod.Data.GlobalData = gd
-    end
-end
-mod:AddCallback(ModCallbacks.MC_POST_PLAYER_INIT, mod.OnGameStart)
 
 ---------------------------------------------------------------
 -----------------------------Main------------------------------
@@ -131,15 +123,24 @@ function mod.GetPlayerNum(player)
             return i
         end
     end
+    return 1
 end
 
 function mod.rand(min, max, rng)
-    --[[if not rng then
+    if not rng then
         rng = RNG()
         rng:SetSeed(Random(), 35)
     end
-    return rng:RandomInt(max - min + 1) + min]]
-    return math.random(min, max)
+    return rng:RandomInt(max - min + 1) + min
+    -- return math.random(min, max)
+end
+
+function mod.keys(t)
+    local keys = {}
+    for k in pairs(t) do
+        table.insert(keys, k)
+    end
+    return keys
 end
 
 function mod.AddTrinketAsItem(player, trinket)
@@ -151,14 +152,6 @@ function mod.AddTrinketAsItem(player, trinket)
     player:UseActiveItem(CollectibleType.COLLECTIBLE_SMELTER, false)
     if trinket1 ~= 0 then player:AddTrinket(trinket1) end
     if trinket2 ~= 0 then player:AddTrinket(trinket2) end
-end
-
-function mod.keys(t)
-    local keys = {}
-    for k in pairs(t) do
-        table.insert(keys, k)
-    end
-    return keys
 end
 
 local function HideWisp(wisp)
@@ -174,22 +167,30 @@ local function HideWisp(wisp)
 end
 
 function mod.AddItemForFloor(player, item)
-    local num = mod.GetPlayerNum(player)
+    local num = player.InitSeed
     local wisp = player:AddItemWisp(item, Vector.Zero)
     HideWisp(wisp)
     table.insert(mod.Data.Players[num].ItemsRemoveNextFloor, item)
 end
 function mod.AddItemForRoom(player, item)
-    local num = mod.GetPlayerNum(player)
+    local num = player.InitSeed
     local wisp = player:AddItemWisp(item, Vector.Zero)
     HideWisp(wisp)
     table.insert(mod.Data.Players[num].ItemsRemoveNextRoom, item)
 end
 
+function mod.CharaterInGame(charType)
+    for i = 0, Game():GetNumPlayers() - 1 do
+        if Isaac.GetPlayer(i):GetPlayerType() == charType then
+            return true
+        end
+    end
+end
+
 mod:AddCallback(ModCallbacks.MC_POST_NEW_LEVEL, function()
     for i = 0, Game():GetNumPlayers() - 1 do
         local player = Isaac.GetPlayer(i)
-        local num = i + 1
+        local num = player.InitSeed
         for j, elem in pairs(mod.Data.Players[num].ItemsRemoveNextFloor) do
             local wisps = Isaac.FindByType(EntityType.ENTITY_FAMILIAR, FamiliarVariant.ITEM_WISP, elem)
             for w = 1, #wisps do
@@ -209,9 +210,9 @@ mod:AddCallback(ModCallbacks.MC_POST_NEW_LEVEL, function()
     end
 end)
 mod:AddCallback(ModCallbacks.MC_POST_NEW_ROOM, function()
-    for i = 0, Game():GetNumPlayers() do
+    for i = 0, Game():GetNumPlayers() - 1 do
         local player = Isaac.GetPlayer(i)
-        local num = i + 1
+        local num = player.InitSeed
         for j, elem in pairs(mod.Data.Players[num].ItemsRemoveNextRoom) do
             local wisps = Isaac.FindByType(EntityType.ENTITY_FAMILIAR, FamiliarVariant.ITEM_WISP, elem)
             for w = 1, #wisps do
@@ -226,9 +227,9 @@ mod:AddCallback(ModCallbacks.MC_POST_NEW_ROOM, function()
     end
 end)
 mod:AddCallback(ModCallbacks.MC_POST_GAME_STARTED, function()
-    for i = 0, Game():GetNumPlayers() do
+    for i = 0, Game():GetNumPlayers() - 1 do
         local player = Isaac.GetPlayer(i)
-        local num = i + 1
+        local num = player.InitSeed
         for j, elem in pairs(mod.Data.Players[num].ItemsRemoveNextRoom) do
             local wisps = Isaac.FindByType(EntityType.ENTITY_FAMILIAR, FamiliarVariant.ITEM_WISP, elem)
             for w = 1, #wisps do
@@ -272,12 +273,24 @@ function mod:onCache(player, cacheFlag)
 end
 mod:AddCallback(ModCallbacks.MC_EVALUATE_CACHE, mod.onCache)
 
+function mod:OnGetBR(player)
+    local num = player.InitSeed
+    if mod.Data.Players[num].HaveBR ~= nil and not mod.Data.Players[num].HaveBR and player:HasCollectible(CollectibleType.COLLECTIBLE_BIRTHRIGHT) then
+        mod.Data.Players[num].HaveBR = true
+        if mod.Characters[player:GetPlayerType()] and mod.Characters[player:GetPlayerType()].GetBR ~= nil then
+            mod.Characters[player:GetPlayerType()].GetBR(player)
+        end
+    end
+end
+mod:AddCallback(ModCallbacks.MC_POST_PLAYER_UPDATE, mod.OnGetBR)
+
 mod:AddCallback(ModCallbacks.MC_POST_UPDATE, function()
     local entities = Game():GetRoom():GetEntities()
 end)
 
 include("scripts.characters.Dream")
 include("scripts.characters.DreamB")
+include("scripts.characters.Tigro")
 
 include("scripts.items.DreamBook")
 include("scripts.items.Momentuum")

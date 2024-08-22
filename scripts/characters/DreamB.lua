@@ -100,7 +100,7 @@ local function MeltingHeartsTime(hearts)
 end
 
 function callbacks:OnPlayerUpdate(player)
-    local num = mod.GetPlayerNum(player)
+    local num = player.InitSeed
     if player:GetPlayerType() == mod.PLAYER_DREAMBSOUL and not player:HasCollectible(mod.COLLECTIBLE_PILFER) then
         player:SetPocketActiveItem(mod.COLLECTIBLE_PILFER)
     elseif player:GetPlayerType() == mod.PLAYER_DREAMBBODY and not player:HasCollectible(mod.COLLECTIBLE_FILPER) then
@@ -181,13 +181,13 @@ end
 mod:AddCallback(ModCallbacks.MC_POST_GAME_STARTED, callbacks.OnGameStart)
 
 function callbacks:OnUsePilfer(_type, RNG, player)
-    local num = mod.GetPlayerNum(player)
+    local num = player.InitSeed
     if pilfer.Active[num] then
         return false
     end
     local soulFactor = math.min(7 * player:GetSoulHearts(), 84)
     local stageFactor = math.min(6 * (Game():GetLevel():GetAbsoluteStage() - 1), 60)
-    local rand = mod.rand(1, 100) <= soulFactor + stageFactor
+    local rand = mod.rand(1, 100, RNG) <= soulFactor + stageFactor
     if player:HasCollectible(mod.COLLECTIBLE_PILFER) or not rand then
         pilfer.Active[num] = Game():GetFrameCount()
         if pilfer.Aura[num] then
@@ -214,7 +214,7 @@ function callbacks:OnUsePilfer(_type, RNG, player)
             if entity:IsVulnerableEnemy() then
                 PlayerUsedPilfer = num
                 entity:TakeDamage(dmg, 0, EntityRef(player), 0)
-                local angle = mod.rand(1, 360)
+                local angle = mod.rand(1, 360, RNG)
                 local x = math.cos(math.rad(angle))
                 local y = math.sin(math.rad(angle))
                 local pickup = Isaac.Spawn(EntityType.ENTITY_PICKUP, PickupVariant.PICKUP_HEART, HeartSubType.HEART_HALF_SOUL, entity.Position, Vector(2 * x, 2 * y), nil):ToPickup()
@@ -231,7 +231,7 @@ mod:AddCallback(ModCallbacks.MC_USE_ITEM, callbacks.OnUsePilfer, mod.COLLECTIBLE
 mod:AddCallback(ModCallbacks.MC_USE_ITEM, callbacks.OnUsePilfer, mod.COLLECTIBLE_FILPER)
 
 function callbacks:OnPilferUpdate(player)
-    local num = mod.GetPlayerNum(player)
+    local num = player.InitSeed
     local entities = Isaac.GetRoomEntities()
     if pilfer.Active[num] then
         local dis = mod._if(player:HasCollectible(mod.COLLECTIBLE_PILFER), 80, 60)
@@ -326,7 +326,7 @@ end
 mod:AddCallback(ModCallbacks.MC_PRE_PICKUP_COLLISION, callbacks.FreeDevilDeals)
 
 function callbacks:CheckBRFamiliar(player)
-    local num = mod.GetPlayerNum(player)
+    local num = player.InitSeed
     if player:GetPlayerType() == mod.PLAYER_DREAMBSOUL or player:GetPlayerType() == mod.PLAYER_DREAMBBODY then
         if player:HasCollectible(CollectibleType.COLLECTIBLE_BIRTHRIGHT) and (not BRFamiliar[num] or not BRFamiliar[num]:Exists()) and player:GetPlayerType() == mod.PLAYER_DREAMBSOUL then
             local pos

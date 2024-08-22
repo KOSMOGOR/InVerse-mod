@@ -7,14 +7,6 @@ local function ShowAchievment(text)
     SFXManager():Play(SoundEffect.SOUND_GOLDENKEY)
 end
 
-local function CheckCharacter(charType)
-    for i = 0, Game():GetNumPlayers() - 1 do
-        if Isaac.GetPlayer(i):GetPlayerType() == charType then
-            return true
-        end
-    end
-end
-
 function callbacks:OnUpdate()
     if not mod.Data.GlobalData.ItemsCanSpawn["Glitched Deck"] and #mod.keys(mod.Data.GlobalData.CardsCanSpawn) >= 3 then
         mod.Data.GlobalData.ItemsCanSpawn["Glitched Deck"] = true
@@ -40,7 +32,7 @@ function callbacks:OnPickupInit(pickup)
     if pickup.Variant == PickupVariant.PICKUP_TAROTCARD and itemConfig:GetCard(pickup.SubType).Name and itemConfig:GetCard(pickup.SubType).Name:match("Momentuum: ") then
         local pool = Game():GetItemPool()
         local newItem = pool:GetCard(pickup.InitSeed, false, false, false)
-        pickup:GetSprite():ReplaceSpritesheet(0, "gfx/items/Momentuum_Card.png")
+        pickup:GetSprite():ReplaceSpritesheet(0, "gfx/items/pickups/Momentuum_Card.png")
         pickup:GetSprite():LoadGraphics()
         if itemConfig:GetCard(pickup.SubType).Name == "Momentuum: 0 - The Fool" and mod.Data.Cards.TheFool and mod.Data.Cards.TheFool == Game():GetLevel():GetCurrentRoomDesc().SafeGridIndex then
             mod.Data.Cards.TheFool = nil
@@ -136,7 +128,7 @@ mod:AddCallback(ModCallbacks.MC_POST_NEW_LEVEL, function()
 end)
 
 mod:AddCallback(ModCallbacks.MC_POST_NPC_DEATH, function(npc)
-    if npc.Type == EntityType.ENTITY_DELIRIUM and CheckCharacter(mod.PLAYER_DREAM) then
+    if npc.Type == EntityType.ENTITY_DELIRIUM and mod.CharaterInGame(mod.PLAYER_DREAM) then
         mod.Data.GlobalData.ItemsCanSpawn["Dream's Handbag"] = true
         ShowAchievment("Dream's Handbag")
     end

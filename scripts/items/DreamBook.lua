@@ -12,7 +12,9 @@ local needHold = 60 * 2
 local needHeal = {}
 local needHealBlue = {}
 function callbacks:SDVDreamBook(player) -- Set Defaul Values
-    local num = mod.GetPlayerNum(player)
+    local num = player.InitSeed
+    if not mod.Data.DreamBookCharges then mod.Data.DreamBookCharges = {} end
+    if not mod.Data.DreamBookCharges[num] then mod.Data.DreamBookCharges[num] = 0 end
     if holdingTimer[num] == nil then holdingTimer[num] = 0 end
     if pause[num] == nil then pause[num] = 0 end
     if chargeBars[num] == nil then
@@ -21,14 +23,13 @@ function callbacks:SDVDreamBook(player) -- Set Defaul Values
         chargeBars[num].PlaybackSpeed = 0.5
     end
 end
+mod:AddCallback(ModCallbacks.MC_POST_PLAYER_INIT, callbacks.SDVDreamBook)
 mod:AddCallback(ModCallbacks.MC_POST_PLAYER_UPDATE, callbacks.SDVDreamBook)
 
 function callbacks:AddDreamBookCharges()
-    for num = 1, Game():GetNumPlayers() do
-        if not mod.Data.DreamBookCharges[num] then
-            mod.Data.DreamBookCharges[num] = 0
-        end
-        local player = Isaac.GetPlayer(num - 1)
+    for i = 0, Game():GetNumPlayers() - 1 do
+        local player = Isaac.GetPlayer(i)
+        local num = player.InitSeed
         if player:HasCollectible(mod.COLLECTIBLE_DREAMS_DREAM_BOOK_PASSIVE) or player:HasCollectible(mod.COLLECTIBLE_DREAMS_DREAM_BOOK_ACTIVE) then
             if Game():GetRoom():IsFirstVisit() then
                 local roomTypeTable = {
@@ -52,7 +53,7 @@ end
 mod:AddCallback(ModCallbacks.MC_POST_NEW_ROOM, callbacks.AddDreamBookCharges)
 
 function callbacks:DreamBookUse(_type, RNG, player)
-    local num = mod.GetPlayerNum(player)
+    local num = player.InitSeed
     if --[[pause[num] == 0 and]] holdingTimer[num] == 0 then
         holdingTimer[num] = 1
         lastFrameHolded[num] = true
@@ -61,7 +62,7 @@ end
 mod:AddCallback(ModCallbacks.MC_USE_ITEM, callbacks.DreamBookUse, mod.COLLECTIBLE_DREAMS_DREAM_BOOK_ACTIVE)
 
 local function HealPlayer(player, heal)
-    local num = mod.GetPlayerNum(player)
+    local num = player.InitSeed
     if not player:CanPickRedHearts() then
         return
     end
@@ -77,7 +78,7 @@ local function HealPlayer(player, heal)
     end
 end
 local function HealPlayerSoul(player)
-    local num = mod.GetPlayerNum(player)
+    local num = player.InitSeed
     if mod.Data.DreamBookCharges[num] >= 3 then
         player:AddSoulHearts(1)
         mod.Data.DreamBookCharges[num] = mod.Data.DreamBookCharges[num] - 3
@@ -88,7 +89,7 @@ local function HealPlayerSoul(player)
 end
 
 function callbacks:DreamBookHolding(player)
-    local num = mod.GetPlayerNum(player)
+    local num = player.InitSeed
     if --[[pause[num] == 0 and]] holdingTimer[num] >= 1 and player:HasCollectible(mod.COLLECTIBLE_DREAMS_DREAM_BOOK_ACTIVE) and Input.IsActionPressed(ButtonAction.ACTION_ITEM, player.ControllerIndex) then
         if lastFrameHolded[num] then
             holdingTimer[num] = holdingTimer[num] + 1
@@ -121,7 +122,7 @@ mod:AddCallback(ModCallbacks.MC_POST_PLAYER_UPDATE, callbacks.DreamBookHolding)
 
 function callbacks:DreamBookConsumeChargesOnDamage(player, damageAmount, damageFlags, damageSource, damageCountdownFrames)
     player = player:ToPlayer()
-    local num = mod.GetPlayerNum(player)
+    local num = player.InitSeed
     if player:HasCollectible(mod.COLLECTIBLE_DREAMS_DREAM_BOOK_PASSIVE) then
         --[[if player:GetSoulHearts() == 0 then
             HealPlayer(player, 1)
@@ -140,7 +141,7 @@ mod:AddCallback(ModCallbacks.MC_ENTITY_TAKE_DMG, callbacks.DreamBookConsumeCharg
 
 function callbacks:DreamBookConsumeChargesOnUpdate(player)
     player = player:ToPlayer()
-    local num = mod.GetPlayerNum(player)
+    local num = player.InitSeed
     if player:HasCollectible(mod.COLLECTIBLE_DREAMS_DREAM_BOOK_PASSIVE) then
         if needHeal[num] then
             HealPlayer(player)
@@ -158,14 +159,14 @@ end
 mod:AddCallback(ModCallbacks.MC_POST_PLAYER_UPDATE, callbacks.DreamBookConsumeChargesOnUpdate)
 
 function callbacks:RenderChargeBar(player, offset)
-    local num = mod.GetPlayerNum(player)
+    local num = player.InitSeed
     if not holdingTimer[num] then return end
     if holdingTimer[num] > 10 and holdingTimer[num] < needHold then
         local perc = math.floor(100.0 * holdingTimer[num] / needHold)
         if perc < 99 then
             chargeBars[num]:SetFrame("Charging", perc)
         end
-    elseif not lastFrameHolded[num] and --[[holdingTimer[num] == needHold and]] not chargeBars[num]:IsPlaying("Disappear") and not chargeBars[num]:IsFinished("Disappear") then
+    elseif lastFrameHolded[num] and holdingTimer[num] == 0 and not chargeBars[num]:IsPlaying("Disappear") and not chargeBars[num]:IsFinished("Disappear") then
         chargeBars[num]:Play("Disappear", true)
     end
     chargeBars[num]:Render(Isaac.WorldToRenderPosition(player.Position) + Vector(20, -30) + offset, Vector.Zero, Vector.Zero)
@@ -179,14 +180,15 @@ local spr = Sprite()
 spr:Load("gfx/ui/DreamBook_Render.anm2", true)
 spr:Play("Idle")
 function callbacks:RenderDreamBookCharges()
+    if not mod.Data.DreamBookCharges then return end
     local y = 0
     for i = 0, Game():GetNumPlayers() - 1 do
         local player = Isaac.GetPlayer(i)
-        local num = mod.GetPlayerNum(player)
+        local num = player.InitSeed
         if (player:HasCollectible(mod.COLLECTIBLE_DREAMS_DREAM_BOOK_PASSIVE) or player:HasCollectible(mod.COLLECTIBLE_DREAMS_DREAM_BOOK_ACTIVE)) and Game():GetHUD():IsVisible() then
             spr:Render(Vector(45 + 20 * Options.HUDOffset, 35 + 12 * Options.HUDOffset + y), Vector.Zero, Vector.Zero)
             f:DrawStringScaled("x" .. (mod.Data.DreamBookCharges[num] or 0), 55 + 20 * Options.HUDOffset, 30 + 12 * Options.HUDOffset + y, 0.7, 0.7, KColor(1, 1, 1, 1), 0, true)
-            f:DrawStringScaled(num, 47 + 20 * Options.HUDOffset, 33 + 12 * Options.HUDOffset + y, 0.5, 0.5, KColor(1, 1, 1, 1), 0, true)
+            f:DrawStringScaled(i + 1, 47 + 20 * Options.HUDOffset, 33 + 12 * Options.HUDOffset + y, 0.5, 0.5, KColor(1, 1, 1, 1), 0, true)
             y = y + 15
         end
     end

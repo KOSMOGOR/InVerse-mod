@@ -13,4 +13,12 @@
             nameimage="playername_dream.png" portrait="t_dre_portrait.png"
             skinColor="2" birthright="" bSkinParent="Dream" hidden="true">
     </player>
+	<player name="Tigro" skin="character_tigro.png" hp="6"
+            nameimage="PlayerName_01_Isaac.png" portrait="PlayerPortrait_Isaac.png"
+            skinColor="0" birthright="Good boy">
+    </player>
+	<player name="TigroB" skin="character_tigro.png" hp="2"
+            nameimage="PlayerName_01_Isaac.png" portrait="PlayerPortrait_Isaac.png"
+            skinColor="0" birthright="Bad boy" bSkinParent="Tigro">
+    </player>
 </players>

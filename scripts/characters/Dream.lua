@@ -15,7 +15,10 @@ mod.Characters[mod.PLAYER_DREAM] = {
     LUCK = 0,
     FLYING = false,
     TEARFLAG = 0,
-    TEARCOLOR = Color(1.0, 1.0, 1.0, 1.0, 0, 0, 0)
+    TEARCOLOR = Color(1.0, 1.0, 1.0, 1.0, 0, 0, 0),
+    GetBR = function(player)
+        player:SetPocketActiveItem(mod.COLLECTIBLE_MOMENTUUM, ActiveSlot.SLOT_POCKET, true)
+    end
 }
 
 function callbacks:OnInit(player)
@@ -26,17 +29,6 @@ function callbacks:OnInit(player)
     end
 end
 mod:AddCallback(ModCallbacks.MC_POST_PLAYER_INIT, callbacks.OnInit)
-
-function callbacks:OnPlayerUpdate(player)
-    local num = mod.GetPlayerNum(player)
-    if mod.Data.Players[num].HaveBR ~= nil and not mod.Data.Players[num].HaveBR and player:HasCollectible(CollectibleType.COLLECTIBLE_BIRTHRIGHT) then
-        mod.Data.Players[num].HaveBR = true
-        if player:GetPlayerType() == mod.PLAYER_DREAM then
-            player:SetPocketActiveItem(mod.COLLECTIBLE_MOMENTUUM, ActiveSlot.SLOT_POCKET, true)
-        end
-    end
-end
-mod:AddCallback(ModCallbacks.MC_POST_PLAYER_UPDATE, callbacks.OnPlayerUpdate)
 
 mod:AddCallback(ModCallbacks.MC_POST_GAME_STARTED, function(_, isContinued)
     if not isContinued then

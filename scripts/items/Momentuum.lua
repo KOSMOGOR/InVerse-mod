@@ -31,7 +31,7 @@ local delayedPlay = {}
 local needHold = 60
 local chargeBars = {}
 function callbacks:SDVMomentuum(player)
-    local num = mod.GetPlayerNum(player)
+    local num = player.InitSeed
     if Momentuum.holdingTimer[num] == nil then Momentuum.holdingTimer[num] = 0 end
     if chargeBars[num] == nil then
         chargeBars[num] = Sprite()
@@ -68,7 +68,7 @@ local function FindRooms(roomType, isClear)
 end
 
 function callbacks:EvaluateItems(player, cacheFlag)
-    local num = mod.GetPlayerNum(player)
+    local num = player.InitSeed
     if cacheFlag == CacheFlag.CACHE_DAMAGE then
         if player:HasCollectible(mod.NULL_STRENGTH) then
             player.Damage = player.Damage * mod._if(player:HasCollectible(CollectibleType.COLLECTIBLE_TAROT_CLOTH), 2.5, 2)
@@ -95,7 +95,7 @@ end
 mod:AddCallback(ModCallbacks.MC_EVALUATE_CACHE, callbacks.EvaluateItems)
 
 function callbacks:MomentuumUse(_type, RNG, player)
-    local num = mod.GetPlayerNum(player)
+    local num = player.InitSeed
     if not Momentuum.Active[num] then
         player:AnimateCollectible(mod.COLLECTIBLE_MOMENTUUM, "LiftItem", "PlayerPickupSparkle")
         Momentuum.Active[num] = true
@@ -107,7 +107,7 @@ function callbacks:MomentuumUse(_type, RNG, player)
     end
 end
 function callbacks:MomentuumHolding(player)
-    local num = mod.GetPlayerNum(player)
+    local num = player.InitSeed
     if Momentuum.Active[num] and player:HasCollectible(mod.COLLECTIBLE_MOMENTUUM) and Input.IsActionPressed(ButtonAction.ACTION_ITEM, player.ControllerIndex) and player:GetCard(0) ~= 0 and not IsMomentuumCard(player:GetCard(0)) then
         if Momentuum.lastFrameHolded[num] then
             Momentuum.holdingTimer[num] = Momentuum.holdingTimer[num] + 1
@@ -131,7 +131,7 @@ function callbacks:MomentuumHolding(player)
     end
 end
 function callbacks:RenderChargeBar(player, offset)
-    local num = mod.GetPlayerNum(player)
+    local num = player.InitSeed
     if not Momentuum.holdingTimer[num] then return end
     if Momentuum.holdingTimer[num] > 10 and Momentuum.holdingTimer[num] < needHold then
         local perc = math.floor(100.0 * Momentuum.holdingTimer[num] / needHold)
@@ -148,7 +148,7 @@ mod:AddCallback(ModCallbacks.MC_POST_PLAYER_RENDER, callbacks.RenderChargeBar)
 function AbsorbCard(player)
     local itemConfig = Isaac.GetItemConfig()
     local card = player:GetCard(0)
-    local num = mod.GetPlayerNum(player)
+    local num = player.InitSeed
     if card then
         if card >= 56 and card <= 77 then
             card = card - 55
@@ -224,8 +224,8 @@ function AbsorbCard(player)
     end
 end
 function callbacks:MomentuumThrow(player)
-    if Momentuum.Active[mod.GetPlayerNum(player)] and player:HasCollectible(mod.COLLECTIBLE_MOMENTUUM) and player:GetShootingJoystick():Length() > 0.1 then
-        Momentuum.Active[mod.GetPlayerNum(player)] = false
+    if Momentuum.Active[player.InitSeed] and player:HasCollectible(mod.COLLECTIBLE_MOMENTUUM) and player:GetShootingJoystick():Length() > 0.1 then
+        Momentuum.Active[player.InitSeed] = false
         local throwVec = player:GetShootingJoystick():Normalized() * 20 + player.Velocity
         local ThrowEntity = Isaac.Spawn(Momentuum.EntityType, Momentuum.EntityVariant, 0, player.Position, throwVec, player)
         PrepareEntity(ThrowEntity)
@@ -412,7 +412,7 @@ mod:AddCallback(ModCallbacks.MC_NPC_UPDATE, callbacks.MomentuumBehavior, Momentu
 mod:AddCallback(ModCallbacks.MC_POST_NPC_DEATH, callbacks.MomentuumDeath, Momentuum.EntityType)
 mod:AddCallback(ModCallbacks.MC_POST_PLAYER_UPDATE, callbacks.MomentuumRevive)
 mod:AddCallback(ModCallbacks.MC_ENTITY_TAKE_DMG, function(_, player, damageAmount, damageFlags, damageSource, damageCountdownFrames)
-    Momentuum.Active[mod.GetPlayerNum(player)] = false
+    Momentuum.Active[player.InitSeed] = false
 end, EntityType.ENTITY_PLAYER)
 mod:AddCallback(ModCallbacks.MC_POST_NEW_ROOM, function()
     for i = 1, 8 do Momentuum.Active[i] = false end
@@ -441,7 +441,7 @@ end
 mod:AddCallback(ModCallbacks.MC_ENTITY_TAKE_DMG, callbacks.MomentuumWisps, EntityType.ENTITY_PLAYER)
 
 function callbacks:OnPlayerUpdate(player)
-    local num = mod.GetPlayerNum(player)
+    local num = player.InitSeed
     if mod.Data.Players[num].Priestess and Game():GetFrameCount() - mod.Data.Players[num].Priestess >= 60 then
         player:UseCard(Card.CARD_HIGH_PRIESTESS, UseFlag.USE_NOANIM | UseFlag.USE_NOANNOUNCER)
         if player:HasCollectible(CollectibleType.COLLECTIBLE_TAROT_CLOTH) then
@@ -534,8 +534,9 @@ function callbacks:OnNewRoom()
         Isaac.Spawn(EntityType.ENTITY_PICKUP, PickupVariant.PICKUP_TAROTCARD, Isaac.GetCardIdByName("mom_fool"),
             Game():GetRoom():FindFreePickupSpawnPosition(Game():GetRoom():GetRandomPosition(0), 0, false, false), Vector.Zero, nil)
     end
-    for num = 1, Game():GetNumPlayers() do
-        local player = Isaac.GetPlayer(num - 1)
+    for i = 0, Game():GetNumPlayers() - 1 do
+        local player = Isaac.GetPlayer(i)
+        local num = player.InitSeed
         if player:HasTrinket(mod.TRINKET_EMPRESS) and player:GetHearts() + player:GetSoulHearts() > 1 or not player:HasTrinket(mod.TRINKET_EMPRESS) then
             if TrinketEmpress[num] then
                 TrinketEmpress[num][1]:Die()
@@ -599,7 +600,7 @@ function callbacks:OnUseCard(card, player, flags)
         return
     end
     local cardName = Isaac.GetItemConfig():GetCard(card).Name
-    local num = mod.GetPlayerNum(player)
+    local num = player.InitSeed
     if cardName == "Momentuum: 0 - The Fool" then
         player:UseActiveItem(CollectibleType.COLLECTIBLE_TELEPORT_2, false)
         if mod.rand(1, 10) <= mod._if(player:HasCollectible(CollectibleType.COLLECTIBLE_TAROT_CLOTH), 8, 6) then
@@ -808,7 +809,7 @@ function callbacks:OnNewLevel()
     mod.Data.Cards.TheFool = nil
     for i = 0, Game():GetNumPlayers() - 1 do
         local player = Isaac.GetPlayer(i)
-        local num = mod.GetPlayerNum(player)
+        local num = player.InitSeed
         if mod.rand(1, 10) <= mod._if(player:HasCollectible(CollectibleType.COLLECTIBLE_MOMS_BOX), 2, 4) then
             player:TryRemoveTrinket(mod.TRINKET_MAGICIAN)
         end
@@ -839,7 +840,7 @@ end
 mod:AddCallback(ModCallbacks.MC_POST_NEW_LEVEL, callbacks.OnNewLevel)
 
 function callbacks:DInfUse(_type, RNG, player)
-    local num = mod.GetPlayerNum(player)
+    local num = player.InitSeed
     if mod.Data.Players[num].WheelOfFortune and mod.rand(1, 10) <= 2 then
         player:RemoveCollectible(CollectibleType.COLLECTIBLE_D_INFINITY)
         mod.Data.Players[num].WheelOfFortune = nil
@@ -873,7 +874,7 @@ function callbacks:OnUseMoon(_type, RNG, player, flags)
     if flags & UseFlag.USE_CARBATTERY == UseFlag.USE_CARBATTERY then
         return
     end
-    local num = mod.GetPlayerNum(player)
+    local num = player.InitSeed
     local rooms1 = FindRooms(RoomType.ROOM_SECRET)
     for _, room in pairs(rooms1) do
         --print('s', room.VisitedCount, room.Clear, room.Data.Type == RoomType.ROOM_SECRET)
