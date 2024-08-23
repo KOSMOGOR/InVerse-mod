@@ -310,12 +310,12 @@ mod:AddCallback(ModCallbacks.MC_POST_NEW_ROOM, callbacks.OnNewRoom)
 
 function callbacks:FreeDevilDeals(pickup, player)
     player = player:ToPlayer()
-    if player and player:GetPlayerType() == mod.PLAYER_DREAMBSOUL and pickup.Price >= -6 and pickup.Price <= -1 then
+    if player and player:GetPlayerType() == mod.PLAYER_DREAMBSOUL and pickup.Price >= -9 and pickup.Price <= -1 then
         pickup.Price = 0
         local entities = Isaac.GetRoomEntities()
         for i = 1, #entities do
             local ent = entities[i]:ToPickup()
-            if ent and ent.Price >= -6 and ent.Price <= -1 then
+            if ent and ent.Price >= -9 and ent.Price <= -1 then
                 ent:Remove()
                 Isaac.Spawn(1000, EffectVariant.POOF01, 0, ent.Position, Vector.Zero, nil)
             end

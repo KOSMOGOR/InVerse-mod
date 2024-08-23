@@ -62,8 +62,17 @@ function callbacks:OnPickupInit(pickup)
     local ind = pickup.InitSeed
     if pickup.Variant == 100 and not mod.Data.Tigro.checkedItems[ind] then
         mod.Data.Tigro.checkedItems[ind] = true
+        local cost = 4
+        if pickup.Price ~= 0 then
+            if ({[-1] = true, [-6] = true, [-7] = true})[pickup.Price] then
+                cost = 8
+            elseif ({[-2] = true, [-3] = true, [-4] = true, [-8] = true, [-9] = true})[pickup.Price] then
+                cost = 12
+            end
+            pickup.Price = 0
+        end
         mod.Data.Tigro.lockedItems[ind] = {
-            cost = 4
+            cost = cost
         }
         LockItemSprite(pickup)
     end

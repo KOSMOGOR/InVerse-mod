@@ -103,7 +103,6 @@ local function SetDefaultValues(_, player)
     local num = player.InitSeed
     if not mod.Data.Players[num] then
         mod.Data.Players[num] = {
-            HaveBR = false,
             ItemsRemoveNextFloor = {},
             ItemsRemoveNextRoom = {},
             TrinketsRemoveNextFloor = {}
@@ -285,7 +284,8 @@ mod:AddCallback(ModCallbacks.MC_EVALUATE_CACHE, mod.onCache)
 
 function mod:OnGetBR(player)
     local num = player.InitSeed
-    if mod.Data.Players[num].HaveBR ~= nil and not mod.Data.Players[num].HaveBR and player:HasCollectible(CollectibleType.COLLECTIBLE_BIRTHRIGHT) then
+    if mod.Data.Players[num].HaveBR == nil then mod.Data.Players[num].HaveBR = false end
+    if not mod.Data.Players[num].HaveBR and player:HasCollectible(CollectibleType.COLLECTIBLE_BIRTHRIGHT) then
         mod.Data.Players[num].HaveBR = true
         if mod.Characters[player:GetPlayerType()] and mod.Characters[player:GetPlayerType()].GetBR ~= nil then
             mod.Characters[player:GetPlayerType()].GetBR(player)
