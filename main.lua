@@ -100,7 +100,7 @@ end
 mod:AddCallback(ModCallbacks.MC_POST_PLAYER_INIT, mod.OnGameStart)
 
 local function SetDefaultValues(_, player)
-    local num = player.InitSeed
+    local num = mod.GetPlayerNum(player)
     if not mod.Data.Players[num] then
         mod.Data.Players[num] = {
             ItemsRemoveNextFloor = {},
@@ -127,12 +127,7 @@ function mod._if(cond, a, b)
 end
 
 function mod.GetPlayerNum(player)
-    for i = 1, Game():GetNumPlayers() do
-        if Isaac.GetPlayer(i - 1).Index == player.Index then
-            return i
-        end
-    end
-    return 1
+    return tostring(player.InitSeed)
 end
 
 function mod.rand(min, max, rng)
@@ -176,13 +171,13 @@ local function HideWisp(wisp)
 end
 
 function mod.AddItemForFloor(player, item)
-    local num = player.InitSeed
+    local num = mod.GetPlayerNum(player)
     local wisp = player:AddItemWisp(item, Vector.Zero)
     HideWisp(wisp)
     table.insert(mod.Data.Players[num].ItemsRemoveNextFloor, item)
 end
 function mod.AddItemForRoom(player, item)
-    local num = player.InitSeed
+    local num = mod.GetPlayerNum(player)
     local wisp = player:AddItemWisp(item, Vector.Zero)
     HideWisp(wisp)
     table.insert(mod.Data.Players[num].ItemsRemoveNextRoom, item)
@@ -199,7 +194,7 @@ end
 mod:AddCallback(ModCallbacks.MC_POST_NEW_LEVEL, function()
     for i = 0, Game():GetNumPlayers() - 1 do
         local player = Isaac.GetPlayer(i)
-        local num = player.InitSeed
+        local num = mod.GetPlayerNum(player)
         for j, elem in pairs(mod.Data.Players[num].ItemsRemoveNextFloor) do
             local wisps = Isaac.FindByType(EntityType.ENTITY_FAMILIAR, FamiliarVariant.ITEM_WISP, elem)
             for w = 1, #wisps do
@@ -221,7 +216,7 @@ end)
 mod:AddCallback(ModCallbacks.MC_POST_NEW_ROOM, function()
     for i = 0, Game():GetNumPlayers() - 1 do
         local player = Isaac.GetPlayer(i)
-        local num = player.InitSeed
+        local num = mod.GetPlayerNum(player)
         for j, elem in pairs(mod.Data.Players[num].ItemsRemoveNextRoom) do
             local wisps = Isaac.FindByType(EntityType.ENTITY_FAMILIAR, FamiliarVariant.ITEM_WISP, elem)
             for w = 1, #wisps do
@@ -238,7 +233,7 @@ end)
 mod:AddCallback(ModCallbacks.MC_POST_GAME_STARTED, function()
     for i = 0, Game():GetNumPlayers() - 1 do
         local player = Isaac.GetPlayer(i)
-        local num = player.InitSeed
+        local num = mod.GetPlayerNum(player)
         for j, elem in pairs(mod.Data.Players[num].ItemsRemoveNextRoom) do
             local wisps = Isaac.FindByType(EntityType.ENTITY_FAMILIAR, FamiliarVariant.ITEM_WISP, elem)
             for w = 1, #wisps do
@@ -265,8 +260,7 @@ function mod:onCache(player, cacheFlag)
         elseif cacheFlag == CacheFlag.CACHE_SHOTSPEED then
             player.ShotSpeed = player.ShotSpeed + mod.Characters[charType].SHOTSPEED
         elseif cacheFlag == CacheFlag.CACHE_RANGE then
-            player.TearHeight = player.TearHeight - mod.Characters[charType].TEARHEIGHT
-            player.TearFallingSpeed = player.TearFallingSpeed + mod.Characters[charType].TEARFALLINGSPEED
+            player.TearRange = player.TearHeight + mod.Characters[charType].TEARRANGE
         elseif cacheFlag == CacheFlag.CACHE_SPEED then
             player.MoveSpeed = player.MoveSpeed + mod.Characters[charType].SPEED
         elseif cacheFlag == CacheFlag.CACHE_LUCK then
@@ -283,7 +277,7 @@ end
 mod:AddCallback(ModCallbacks.MC_EVALUATE_CACHE, mod.onCache)
 
 function mod:OnGetBR(player)
-    local num = player.InitSeed
+    local num = mod.GetPlayerNum(player)
     if mod.Data.Players[num].HaveBR == nil then mod.Data.Players[num].HaveBR = false end
     if not mod.Data.Players[num].HaveBR and player:HasCollectible(CollectibleType.COLLECTIBLE_BIRTHRIGHT) then
         mod.Data.Players[num].HaveBR = true

@@ -34,8 +34,7 @@ mod.Characters[mod.PLAYER_DREAMBSOUL] = {
     FIREDELAY = 1.1,
     SPEED = 0,
     SHOTSPEED = 0.25,
-    TEARHEIGHT = -2,
-    TEARFALLINGSPEED = 0.2,
+    TEARRANGE = -2,
     LUCK = 0,
     FLYING = true,
     TEARFLAG = TearFlags.TEAR_SPECTRAL,
@@ -100,7 +99,7 @@ local function MeltingHeartsTime(hearts)
 end
 
 function callbacks:OnPlayerUpdate(player)
-    local num = player.InitSeed
+    local num = mod.GetPlayerNum(player)
     if player:GetPlayerType() == mod.PLAYER_DREAMBSOUL and not player:HasCollectible(mod.COLLECTIBLE_PILFER) then
         player:SetPocketActiveItem(mod.COLLECTIBLE_PILFER)
     elseif player:GetPlayerType() == mod.PLAYER_DREAMBBODY and not player:HasCollectible(mod.COLLECTIBLE_FILPER) then
@@ -181,7 +180,7 @@ end
 mod:AddCallback(ModCallbacks.MC_POST_GAME_STARTED, callbacks.OnGameStart)
 
 function callbacks:OnUsePilfer(_type, RNG, player)
-    local num = player.InitSeed
+    local num = mod.GetPlayerNum(player)
     if pilfer.Active[num] then
         return false
     end
@@ -231,7 +230,7 @@ mod:AddCallback(ModCallbacks.MC_USE_ITEM, callbacks.OnUsePilfer, mod.COLLECTIBLE
 mod:AddCallback(ModCallbacks.MC_USE_ITEM, callbacks.OnUsePilfer, mod.COLLECTIBLE_FILPER)
 
 function callbacks:OnPilferUpdate(player)
-    local num = player.InitSeed
+    local num = mod.GetPlayerNum(player)
     local entities = Isaac.GetRoomEntities()
     if pilfer.Active[num] then
         local dis = mod._if(player:HasCollectible(mod.COLLECTIBLE_PILFER), 80, 60)
@@ -326,7 +325,7 @@ end
 mod:AddCallback(ModCallbacks.MC_PRE_PICKUP_COLLISION, callbacks.FreeDevilDeals)
 
 function callbacks:CheckBRFamiliar(player)
-    local num = player.InitSeed
+    local num = mod.GetPlayerNum(player)
     if player:GetPlayerType() == mod.PLAYER_DREAMBSOUL or player:GetPlayerType() == mod.PLAYER_DREAMBBODY then
         if player:HasCollectible(CollectibleType.COLLECTIBLE_BIRTHRIGHT) and (not BRFamiliar[num] or not BRFamiliar[num]:Exists()) and player:GetPlayerType() == mod.PLAYER_DREAMBSOUL then
             local pos
