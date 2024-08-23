@@ -114,7 +114,7 @@ mod:AddCallback(ModCallbacks.MC_POST_PLAYER_UPDATE, SetDefaultValues)
 
 function mod:SaveGame(ShouldSave)
     if ShouldSave then
-        mod:SaveData(json.encode(mod.Data))
+        -- mod:SaveData(json.encode(mod.Data))
     end
 end
 mod:AddCallback(ModCallbacks.MC_PRE_GAME_EXIT, mod.SaveGame)
@@ -260,7 +260,7 @@ function mod:onCache(player, cacheFlag)
         elseif cacheFlag == CacheFlag.CACHE_SHOTSPEED then
             player.ShotSpeed = player.ShotSpeed + mod.Characters[charType].SHOTSPEED
         elseif cacheFlag == CacheFlag.CACHE_RANGE then
-            player.TearRange = player.TearHeight + mod.Characters[charType].TEARRANGE
+            player.TearRange = player.TearRange + mod.Characters[charType].TEARRANGE
         elseif cacheFlag == CacheFlag.CACHE_SPEED then
             player.MoveSpeed = player.MoveSpeed + mod.Characters[charType].SPEED
         elseif cacheFlag == CacheFlag.CACHE_LUCK then
