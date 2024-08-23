@@ -2,7 +2,7 @@
 	<Info CreatedBy="Rugar" CreatedOn="24/10/2020 16:54:20 PM" Fps="30" Version="1" />
 	<Content>
 		<Spritesheets>
-			<Spritesheet Id="0" Path="costumes/tigro_hair.png" />
+			<Spritesheet Id="0" Path="costumes/teegro_hair.png" />
 		</Spritesheets>
 		<Layers>
 			<Layer Id="0" Name="head0" SpritesheetId="0" />

@@ -114,7 +114,7 @@ mod:AddCallback(ModCallbacks.MC_POST_PLAYER_UPDATE, SetDefaultValues)
 
 function mod:SaveGame(ShouldSave)
     if ShouldSave then
-        -- mod:SaveData(json.encode(mod.Data))
+        mod:SaveData(json.encode(mod.Data))
     end
 end
 mod:AddCallback(ModCallbacks.MC_PRE_GAME_EXIT, mod.SaveGame)
@@ -294,7 +294,7 @@ end)
 
 include("scripts.characters.Dream")
 include("scripts.characters.DreamB")
-include("scripts.characters.Tigro")
+include("scripts.characters.Teegro")
 
 include("scripts.items.DreamBook")
 include("scripts.items.Momentuum")
