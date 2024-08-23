@@ -17,8 +17,8 @@
             nameimage="PlayerName_01_Isaac.png" portrait="PlayerPortrait_Isaac.png"
             skinColor="0" birthright="Good boy">
     </player>
-	<player name="TigroB" skin="character_tigro.png" hp="2"
+	<!-- <player name="TigroB" skin="character_tigro.png" hp="2"
             nameimage="PlayerName_01_Isaac.png" portrait="PlayerPortrait_Isaac.png"
             skinColor="0" birthright="Bad boy" bSkinParent="Tigro">
-    </player>
+    </player> -->
 </players>
