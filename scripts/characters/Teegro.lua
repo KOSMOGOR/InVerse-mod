@@ -14,7 +14,9 @@ function callbacks:SetDefaultValues(player) -- Set Defaul Values
             checkedItems = {},
             lockedItems = {},
             keyShards = 4,
-            itemsDeleteOnNewRoom = {}
+            itemsDeleteOnNewRoom = {},
+            hadDamageThisRoom = false,
+            lastRoom = 0
         }
     end
 end
@@ -340,6 +342,77 @@ function callbacks:DeleteItemOnNewRoom()
     end
 end
 mod:AddCallback(ModCallbacks.MC_POST_NEW_ROOM, callbacks.DeleteItemOnNewRoom)
+
+local lastRoomCleared = true
+function callbacks:CheckRoomReward()
+    local room = Game():GetRoom()
+    local entities = room:GetEntities()
+    if not lastRoomCleared and room:IsClear() then
+        local hasRoomReward = false
+        for i = 0, #entities - 1 do
+            local ent = entities:Get(i)
+            if ent.Type == 5 then
+                if ent.DropSeed == room:GetAwardSeed() then
+                    hasRoomReward = true
+                    break
+                end
+            end
+        end
+        local rng = RNG()
+        rng:SetSeed(room:GetAwardSeed(), 35)
+        if not hasRoomReward and room:GetType() ~= RoomType.ROOM_BOSS then
+            local key = SelectRandomWeights({
+                {96, KeySubType.KEY_NORMAL},
+                {2, KeySubType.KEY_GOLDEN},
+                {2, KeySubType.KEY_CHARGED}
+            }, rng)
+            Isaac.Spawn(5, PickupVariant.PICKUP_KEY, key,
+                room:FindFreePickupSpawnPosition(room:GetCenterPos(), 0), Vector.Zero, nil
+            )
+        end
+        if not mod.Data.Teegro.hadDamageThisRoom then
+            local r = mod.rand(1, 100, rng)
+            if r <= 47 + 5 then
+                Isaac.Spawn(5, mod._if(r <= 5, HunterChestVariant, HunterKeyPartVariant), 0,
+                    room:FindFreePickupSpawnPosition(room:GetCenterPos(), 0), Vector.Zero, nil
+                )
+            end
+        end
+    end
+    lastRoomCleared = room:IsClear()
+end
+mod:AddCallback(ModCallbacks.MC_POST_UPDATE, callbacks.CheckRoomReward)
+
+function callbacks:CheckDamageThisRoom(entity, amount, flags, source)
+    local player = entity:ToPlayer()
+    if not player then return end
+    if flags & (DamageFlag.DAMAGE_NO_PENALTIES | DamageFlag.DAMAGE_NO_MODIFIERS) ~= 0 then return end
+    mod.Data.Teegro.hadDamageThisRoom = true
+end
+mod:AddCallback(ModCallbacks.MC_ENTITY_TAKE_DMG, callbacks.CheckDamageThisRoom)
+
+function callbacks:ResetTakenDamageOnNewRoom()
+    local roomDescriptor = Game():GetLevel():GetCurrentRoomDesc()
+    if roomDescriptor.SafeGridIndex ~= mod.Data.Teegro.lastRoom then
+        mod.Data.Teegro.hadDamageThisRoom = false
+        mod.Data.Teegro.lastRoom = roomDescriptor.SafeGridIndex
+    end
+end
+mod:AddCallback(ModCallbacks.MC_POST_NEW_ROOM, callbacks.ResetTakenDamageOnNewRoom)
+
+function callbacks:SpawnKeyAfterBoss(npc)
+    local roomType = Game():GetRoom():GetType()
+    if npc:IsBoss() and ({
+        [RoomType.ROOM_BOSS] = true,
+        [RoomType.ROOM_DEVIL] = true,
+        [RoomType.ROOM_ANGEL] = true
+    })[roomType] then
+        local angle = math.rad(mod.rand(0, 359))
+        local vec = Vector(math.cos(angle), math.sin(angle)) * 3
+        Isaac.Spawn(5, HunterKeyVariant, 0, npc.Position, vec, nil)
+    end
+end
+mod:AddCallback(ModCallbacks.MC_POST_NPC_DEATH, callbacks.SpawnKeyAfterBoss)
 
 local function IsActionHold(action)
     for i = 0, Game():GetNumPlayers() - 1 do
