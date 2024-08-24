@@ -307,7 +307,7 @@ include("scripts.characters.Teegro")
 include("scripts.items.DreamBook")
 include("scripts.items.Momentuum")
 
--- include("scripts.misc.unlocks")
+include("scripts.misc.unlocks")
 
 include("scripts.compat.EID")
 include("scripts.compat.pog")
