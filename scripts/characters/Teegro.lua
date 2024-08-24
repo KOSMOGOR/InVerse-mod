@@ -16,7 +16,9 @@ function callbacks:SetDefaultValues(player) -- Set Defaul Values
             keyShards = 4,
             itemsDeleteOnNewRoom = {},
             hadDamageThisRoom = false,
-            lastRoom = 0
+            lastRoom = 0,
+            lastRoomCleared = true,
+            bossInRoom = false
         }
     end
 end
@@ -130,6 +132,7 @@ function callbacks:OnPickupInit(pickup)
     local ind = GetPickupInd(pickup)
     if pickup.Variant == 100 and not mod.Data.Teegro.checkedItems[ind] and pickup:GetSprite():GetAnimation() ~= "Empty" then
         mod.Data.Teegro.checkedItems[ind] = true
+        if Isaac.GetItemConfig():GetCollectible(pickup.SubType):HasTags(ItemConfig.TAG_QUEST) then return end
         local cost = 4
         local touch = false
         if pickup.Price ~= 0 then
@@ -154,19 +157,6 @@ function callbacks:OnPickupInit(pickup)
 end
 mod:AddCallback(ModCallbacks.MC_POST_PICKUP_UPDATE, callbacks.OnPickupInit)
 
-function callbacks:LockPickupSpritesOnNewRoom()
-    for _, entity in ipairs(Isaac.GetRoomEntities()) do
-        local pickup = entity:ToPickup()
-        if pickup then
-            local ind = GetPickupInd(pickup)
-            if mod.Data.Teegro.lockedItems[ind] then
-                LockItemSprite(pickup, mod.Data.Teegro.lockedItems[ind].touch)
-            end
-        end
-    end
-end
-mod:AddCallback(ModCallbacks.MC_POST_NEW_ROOM, callbacks.LockPickupSpritesOnNewRoom)
-
 function callbacks:LockedItemInteraction(pickup, collider, low)
     if collider:ToPlayer() == nil or pickup:GetSprite():GetAnimation() == "Empty" then return end
     local ind = GetPickupInd(pickup)
@@ -178,6 +168,9 @@ function callbacks:LockedItemInteraction(pickup, collider, low)
                 pickup.Child.Child:GetSprite():Play("BackUnlocking")
                 SFXManager():Play(SoundEffect.SOUND_CHAIN_BREAK)
             elseif pickup.Child then
+                if mod.Data.Teegro.lockedItems[ind].touch == true and Game():GetRoom():GetType() == RoomType.ROOM_DEVIL then
+                    Game():AddDevilRoomDeal()
+                end
                 pickup.Child:Remove()
             end
         end
@@ -338,16 +331,40 @@ function callbacks:DeleteItemOnNewRoom()
         if mod.Data.Teegro.itemsDeleteOnNewRoom[ind] then
             ent:Remove()
             mod.Data.Teegro.itemsDeleteOnNewRoom[ind] = nil
+            mod.Data.Teegro.lockedItems[ind] = nil
         end
     end
 end
 mod:AddCallback(ModCallbacks.MC_POST_NEW_ROOM, callbacks.DeleteItemOnNewRoom)
 
-local lastRoomCleared = true
+function callbacks:LockPickupSpritesOnNewRoom()
+    for _, entity in ipairs(Isaac.GetRoomEntities()) do
+        local pickup = entity:ToPickup()
+        if pickup then
+            local ind = GetPickupInd(pickup)
+            if mod.Data.Teegro.lockedItems[ind] then
+                LockItemSprite(pickup, mod.Data.Teegro.lockedItems[ind].touch)
+            end
+        end
+    end
+end
+mod:AddCallback(ModCallbacks.MC_POST_NEW_ROOM, callbacks.LockPickupSpritesOnNewRoom)
+
+local function CheckBossInRoom()
+    local entities = Game():GetRoom():GetEntities()
+    for i = 0, #entities do
+        local ent = entities:Get(i):ToNPC()
+        if ent and ent:IsBoss() then
+            mod.Data.Teegro.bossInRoom = true
+            return
+        end
+    end
+end
 function callbacks:CheckRoomReward()
     local room = Game():GetRoom()
     local entities = room:GetEntities()
-    if not lastRoomCleared and room:IsClear() then
+    if not room:IsClear() then CheckBossInRoom() end
+    if not mod.Data.Teegro.lastRoomCleared and room:IsClear() then
         local hasRoomReward = false
         for i = 0, #entities - 1 do
             local ent = entities:Get(i)
@@ -378,8 +395,18 @@ function callbacks:CheckRoomReward()
                 )
             end
         end
+        if mod.Data.Teegro.bossInRoom and ({
+            [RoomType.ROOM_BOSS] = true,
+            [RoomType.ROOM_DEVIL] = true,
+            [RoomType.ROOM_ANGEL] = true
+        })[Game():GetRoom():GetType()] then
+            Isaac.Spawn(5, HunterKeyVariant, 0,
+                room:FindFreePickupSpawnPosition(room:GetCenterPos(), 0), Vector.Zero, nil
+            )
+        end
     end
-    lastRoomCleared = room:IsClear()
+    mod.Data.Teegro.lastRoomCleared = room:IsClear()
+    if room:IsClear() then mod.Data.Teegro.bossInRoom = false end
 end
 mod:AddCallback(ModCallbacks.MC_POST_UPDATE, callbacks.CheckRoomReward)
 
@@ -400,19 +427,27 @@ function callbacks:ResetTakenDamageOnNewRoom()
 end
 mod:AddCallback(ModCallbacks.MC_POST_NEW_ROOM, callbacks.ResetTakenDamageOnNewRoom)
 
-function callbacks:SpawnKeyAfterBoss(npc)
-    local roomType = Game():GetRoom():GetType()
-    if npc:IsBoss() and ({
-        [RoomType.ROOM_BOSS] = true,
-        [RoomType.ROOM_DEVIL] = true,
-        [RoomType.ROOM_ANGEL] = true
-    })[roomType] then
-        local angle = math.rad(mod.rand(0, 359))
-        local vec = Vector(math.cos(angle), math.sin(angle)) * 3
-        Isaac.Spawn(5, HunterKeyVariant, 0, npc.Position, vec, nil)
+function callbacks:BirthrightEffect()
+    local stage = Game():GetLevel():GetStage()
+    if mod.CharaterHasBirthright(mod.PLAYER_TIGRO) and stage ~= LevelStage.STAGE6 then
+        local rng = RNG()
+        rng:SetSeed(Game():GetRoom():GetAwardSeed(), 35)
+        for i = 1, 4 do
+            local pos = Vector(200 + mod._if(i % 2 == 0, 240, 0), 200 + mod._if(i > 2, 160, 0))
+            local item = GetRandomItem(0)
+            local pickup = Isaac.Spawn(5, 100, item, pos, Vector.Zero, nil):ToPickup()
+            local ind = GetPickupInd(pickup)
+            mod.Data.Teegro.itemsDeleteOnNewRoom[ind] = true
+            mod.Data.Teegro.checkedItems[ind] = true
+            mod.Data.Teegro.lockedItems[ind] = {
+                cost = mod.rand(2, 3, rng) * 4,
+                touch = true
+            }
+            LockItemSprite(pickup, true)
+        end
     end
 end
-mod:AddCallback(ModCallbacks.MC_POST_NPC_DEATH, callbacks.SpawnKeyAfterBoss)
+mod:AddCallback(ModCallbacks.MC_POST_NEW_LEVEL, callbacks.BirthrightEffect)
 
 local function IsActionHold(action)
     for i = 0, Game():GetNumPlayers() - 1 do

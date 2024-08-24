@@ -191,6 +191,14 @@ function mod.CharaterInGame(charType)
     end
 end
 
+function mod.CharaterHasBirthright(charType)
+    for i = 0, Game():GetNumPlayers() - 1 do
+        if Isaac.GetPlayer(i):GetPlayerType() == charType and Isaac.GetPlayer(i):HasCollectible(CollectibleType.COLLECTIBLE_BIRTHRIGHT) then
+            return true
+        end
+    end
+end
+
 mod:AddCallback(ModCallbacks.MC_POST_NEW_LEVEL, function()
     for i = 0, Game():GetNumPlayers() - 1 do
         local player = Isaac.GetPlayer(i)
@@ -299,7 +307,7 @@ include("scripts.characters.Teegro")
 include("scripts.items.DreamBook")
 include("scripts.items.Momentuum")
 
-include("scripts.misc.unlocks")
+-- include("scripts.misc.unlocks")
 
 include("scripts.compat.EID")
 include("scripts.compat.pog")
