@@ -2,7 +2,7 @@
 	<Info CreatedBy="Unknown" CreatedOn="15.05.2022 15:25:35" Version="4" Fps="30"/>
 	<Content>
 		<Spritesheets>
-			<Spritesheet Path="pickups/Momentuum_Cards.png" Id="0"/>
+			<Spritesheet Path="Momentuum_Cards.png" Id="0"/>
 		</Spritesheets>
 		<Layers>
 			<Layer Name="card" Id="0" SpritesheetId="0"/>
