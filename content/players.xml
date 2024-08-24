@@ -7,15 +7,15 @@
     </player>
 	<player name="DreamBSoul" skin="t_dre_ghost.png" hp="0" armor="1"
             nameimage="playername_dream.png" portrait="t_dre_portrait.png"
-            skinColor="2" birthright="" bSkinParent="Dream">
+            skinColor="2" birthright="Go do a crime" bSkinParent="Dream">
     </player>
 	<player name="DreamBBody" skin="t_dre.png" hp="0" armor="1"
             nameimage="playername_dream.png" portrait="t_dre_portrait.png"
-            skinColor="2" birthright="" bSkinParent="Dream" hidden="true">
+            skinColor="2" birthright="Soul, i don't feel so good..." bSkinParent="Dream" hidden="true">
     </player>
 	<player name="Teegro" skin="character_teegro.png" hp="6"
             nameimage="PlayerName_01_Isaac.png" portrait="PlayerPortrait_Isaac.png"
-            skinColor="0" birthright="Good boy">
+            skinColor="0" birthright="Reward for the Good Boy">
     </player>
 	<!-- <player name="TeegroB" skin="character_teegro.png" hp="2"
             nameimage="PlayerName_01_Isaac.png" portrait="PlayerPortrait_Isaac.png"
