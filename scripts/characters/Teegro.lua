@@ -210,7 +210,6 @@ function callbacks:GrabHunterKey(pickup, collider, low)
 end
 mod:AddCallback(ModCallbacks.MC_PRE_PICKUP_COLLISION, callbacks.GrabHunterKey)
 
-local needReplace = {}
 function callbacks:OpenHunterChest(pickup, collider, low)
     local rng = RNG()
     rng:SetSeed(pickup.InitSeed, 35)
@@ -249,7 +248,6 @@ function callbacks:OpenHunterChest(pickup, collider, low)
             local pos = pickup.Position
             local item = GetRandomItem(mod._if(rand == 2, 0, 2), mod._if(rand == 2, nil, {ItemPoolType.POOL_TREASURE}))
             local pickup2 = Isaac.Spawn(5, 100, item, pos, Vector.Zero, nil)
-            print(pickup2:GetSprite():GetOverlayAnimation())
             pickup2:GetSprite():ReplaceSpritesheet(5, "gfx/teegro/Hunter_Chest_item.png")
             pickup2:GetSprite():LoadGraphics()
             pickup2:GetSprite():SetOverlayFrame("Alternates", 10)
@@ -312,14 +310,30 @@ end
 mod:AddCallback(ModCallbacks.MC_POST_PICKUP_UPDATE, callbacks.HunterChestUpdate)
 
 function callbacks:SpawnHunterKey(pickup)
-    if not mod.CharaterInGame(mod.PLAYER_TIGRO) then return end
-    if not pickup:GetSprite():IsPlaying("Appear") or pickup:GetSprite():GetFrame() ~= 1 then return end
-    if pickup.Variant ~= 30 then return end
-    local r = mod.rand(1, 1000)
-    if r <= 5 then
-        pickup:Morph(5, HunterKeyVariant, 0, true, false, true)
-    elseif r <= 250 + 5 then
-        pickup:Morph(5, HunterKeyPartVariant, 0, true, false, true)
+    if not mod.CharaterInGame(mod.PLAYER_TIGRO) or pickup.Variant == 100 then return end
+    local ind = GetPickupInd(pickup)
+    if mod.Data.Teegro.checkedItems[ind] then return end
+    mod.Data.Teegro.checkedItems[ind] = true
+    local rng = RNG()
+    rng:SetSeed(pickup.InitSeed, 35)
+    if pickup.Variant == 30 and pickup.Price == 0 then
+        local r = mod.rand(1, 1000, rng)
+        if r <= 5 then
+            pickup:Morph(5, HunterKeyVariant, 0, false, true)
+        elseif r <= 250 + 5 then
+            pickup:Morph(5, HunterKeyPartVariant, 0, false, true)
+        end
+    elseif pickup.Price ~= 0 then
+        local r = mod.rand(1, 100, rng)
+        if r <= 2 then
+            pickup:Morph(5, HunterKeyVariant, 0, false, true)
+            pickup.AutoUpdatePrice = false
+            pickup.Price = 15
+        elseif r <= 25 + 2 then
+            pickup:Morph(5, HunterKeyPartVariant, 0, false, true)
+            pickup.AutoUpdatePrice = false
+            pickup.Price = 5
+        end
     end
 end
 mod:AddCallback(ModCallbacks.MC_POST_PICKUP_UPDATE, callbacks.SpawnHunterKey)
@@ -498,9 +512,3 @@ function callbacks:RenderDreamBookCharges()
     RenderSincePickup = math.min(RenderSincePickup + 1, 180)
 end
 mod:AddCallback(ModCallbacks.MC_POST_RENDER, callbacks.RenderDreamBookCharges)
-
-
-
-mod:AddCallback(ModCallbacks.MC_POST_PICKUP_UPDATE, function(_, pickup)
-    -- print(Game():GetRoom():GetAwardSeed(), pickup.DropSeed)
-end)
