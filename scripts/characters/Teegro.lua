@@ -379,7 +379,7 @@ function callbacks:RenderDreamBookCharges()
             alpha = 1
             RenderSincePickup = 60
         end
-        local coords = Isaac.WorldToRenderPosition(TeegroPosition) - Vector(0, 40)
+        local coords = Game():GetRoom():WorldToScreenPosition(TeegroPosition) - Vector(0, 40)
         spr:Render(coords - Vector(6, 0), Vector.Zero, Vector.Zero)
         spr:SetFrame("Idle", mod.Data.Teegro.keyShards % 4)
         spr.Color = Color(1, 1, 1, alpha)
