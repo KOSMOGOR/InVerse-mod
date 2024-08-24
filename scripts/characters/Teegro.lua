@@ -312,6 +312,7 @@ end
 mod:AddCallback(ModCallbacks.MC_POST_PICKUP_UPDATE, callbacks.HunterChestUpdate)
 
 function callbacks:SpawnHunterKey(pickup)
+    if not mod.CharaterInGame(mod.PLAYER_TIGRO) then return end
     if not pickup:GetSprite():IsPlaying("Appear") or pickup:GetSprite():GetFrame() ~= 1 then return end
     if pickup.Variant ~= 30 then return end
     local r = mod.rand(1, 1000)
@@ -361,6 +362,7 @@ local function CheckBossInRoom()
     end
 end
 function callbacks:CheckRoomReward()
+    if not mod.CharaterInGame(mod.PLAYER_TIGRO) then return end
     local room = Game():GetRoom()
     local entities = room:GetEntities()
     if not room:IsClear() then CheckBossInRoom() end
