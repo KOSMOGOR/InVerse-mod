@@ -122,8 +122,9 @@ local function LockItemSprite(item, touch)
         item.SpriteOffset = Vector(0, 14)
         item:GetSprite():SetFrame("Idle", 0)
         item:GetSprite():RemoveOverlay()
-        local effect = Isaac.Spawn(1000, KeyPriceVariant, 0, item.Position + Vector(0, 10), Vector.Zero, nil):ToEffect()
+        local effect = Isaac.Spawn(1000, KeyPriceVariant, 0, item.Position, Vector.Zero, nil):ToEffect()
         effect.DepthOffset = -10
+        effect.SpriteOffset = Vector(0, 10)
         effect:GetSprite():SetFrame("Idle", mod.Data.Teegro.lockedItems[ind].cost // 4 - 1)
         item.Child = effect
         effect.Parent = item
@@ -135,7 +136,7 @@ function callbacks:UpdateChainsAndPrice(effect)
         if not (effect.Parent and effect.Parent:Exists()) then
             effect:Remove()
         elseif effect.Position.X ~= effect.Parent.Position.X then
-            effect.Position.X = effect.Parent.Position.X
+            effect.Position = Vector(effect.Parent.Position.X, effect.Position.Y)
         end
     end
 end
@@ -144,6 +145,9 @@ mod:AddCallback(ModCallbacks.MC_POST_EFFECT_UPDATE, callbacks.UpdateChainsAndPri
 function callbacks:OnPickupInit(pickup)
     if not mod.CharaterInGame(mod.PLAYER_TIGRO) then return end
     local ind = GetPickupInd(pickup)
+    if mod.Data.Teegro.lockedItems[ind] and not pickup.Child then
+        LockItemSprite(pickup, mod.Data.Teegro.lockedItems[ind].touch)
+    end
     if pickup.Variant == 100 and not mod.Data.Teegro.checkedItems[ind] and pickup:GetSprite():GetAnimation() ~= "Empty" then
         mod.Data.Teegro.checkedItems[ind] = true
         if Isaac.GetItemConfig():GetCollectible(pickup.SubType):HasTags(ItemConfig.TAG_QUEST) then return end
