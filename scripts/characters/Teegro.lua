@@ -18,7 +18,7 @@ function callbacks:SetDefaultValues(player) -- Set Defaul Values
             hadDamageThisRoom = false,
             lastRoom = 0,
             lastRoomCleared = true,
-            bossInRoom = false
+            bossWasKilled = false
         }
     end
 end
@@ -150,7 +150,7 @@ function callbacks:OnPickupInit(pickup)
     end
     if pickup.Variant == 100 and not mod.Data.Teegro.checkedItems[ind] and pickup:GetSprite():GetAnimation() ~= "Empty" then
         mod.Data.Teegro.checkedItems[ind] = true
-        if Isaac.GetItemConfig():GetCollectible(pickup.SubType):HasTags(ItemConfig.TAG_QUEST) then return end
+        if Isaac.GetItemConfig():GetCollectible(pickup.SubType):HasTags(ItemConfig.TAG_QUEST) or Game():GetRoom():GetType() == RoomType.ROOM_BOSS then return end
         local cost = 4
         local touch = false
         if pickup.Price ~= 0 then
@@ -383,21 +383,10 @@ function callbacks:LockPickupSpritesOnNewRoom()
 end
 mod:AddCallback(ModCallbacks.MC_POST_NEW_ROOM, callbacks.LockPickupSpritesOnNewRoom)
 
-local function CheckBossInRoom()
-    local entities = Game():GetRoom():GetEntities()
-    for i = 0, #entities do
-        local ent = entities:Get(i):ToNPC()
-        if ent and ent:IsBoss() then
-            mod.Data.Teegro.bossInRoom = true
-            return
-        end
-    end
-end
 function callbacks:CheckRoomReward()
     if not mod.CharaterInGame(mod.PLAYER_TIGRO) then return end
     local room = Game():GetRoom()
     local entities = room:GetEntities()
-    if not room:IsClear() then CheckBossInRoom() end
     if not mod.Data.Teegro.lastRoomCleared and room:IsClear() then
         local hasRoomReward = false
         for i = 0, #entities - 1 do
@@ -429,20 +418,28 @@ function callbacks:CheckRoomReward()
                 )
             end
         end
-        if mod.Data.Teegro.bossInRoom and ({
+    end
+    mod.Data.Teegro.lastRoomCleared = room:IsClear()
+    if room:IsClear() then mod.Data.Teegro.bossWasKilled = false end
+end
+mod:AddCallback(ModCallbacks.MC_POST_UPDATE, callbacks.CheckRoomReward)
+
+function callbacks:SpawnKeyAfterBossDeath(npc)
+    if not mod.CharaterInGame(mod.PLAYER_TIGRO) then return end
+    if npc:IsBoss() and not mod.Data.Teegro.bossWasKilled then
+        if ({
             [RoomType.ROOM_BOSS] = true,
             [RoomType.ROOM_DEVIL] = true,
             [RoomType.ROOM_ANGEL] = true
         })[Game():GetRoom():GetType()] then
-            Isaac.Spawn(5, HunterKeyVariant, 0,
-                room:FindFreePickupSpawnPosition(room:GetCenterPos(), 0), Vector.Zero, nil
-            )
+            local angle = math.rad(mod.rand(0, 359))
+            local vec = Vector(math.cos(angle), math.sin(angle)) * 3
+            Isaac.Spawn(5, HunterKeyVariant, 0, npc.Position, vec, nil)
         end
+        mod.Data.Teegro.bossWasKilled = true
     end
-    mod.Data.Teegro.lastRoomCleared = room:IsClear()
-    if room:IsClear() then mod.Data.Teegro.bossInRoom = false end
 end
-mod:AddCallback(ModCallbacks.MC_POST_UPDATE, callbacks.CheckRoomReward)
+mod:AddCallback(ModCallbacks.MC_POST_NPC_DEATH, callbacks.SpawnKeyAfterBossDeath)
 
 function callbacks:CheckDamageThisRoom(entity, amount, flags, source)
     local player = entity:ToPlayer()
