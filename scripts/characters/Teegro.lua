@@ -115,6 +115,8 @@ local function LockItemSprite(item, touch)
         effect2:FollowParent(item)
         item.Child = effect1
         item.Child.Child = effect2
+        effect1.Parent = item
+        effect2.Parent = effect1
     else
         item.Price = 0
         item.SpriteOffset = Vector(0, 14)
@@ -124,8 +126,20 @@ local function LockItemSprite(item, touch)
         effect.DepthOffset = -10
         effect:GetSprite():SetFrame("Idle", mod.Data.Teegro.lockedItems[ind].cost // 4 - 1)
         item.Child = effect
+        effect.Parent = item
     end
 end
+
+function callbacks:UpdateChainsAndPrice(effect)
+    if effect.Variant == ItemChainsVarian or effect.Variant == KeyPriceVariant then
+        if not (effect.Parent and effect.Parent:Exists()) then
+            effect:Remove()
+        elseif effect.Position.X ~= effect.Parent.Position.X then
+            effect.Position.X = effect.Parent.Position.X
+        end
+    end
+end
+mod:AddCallback(ModCallbacks.MC_POST_EFFECT_UPDATE, callbacks.UpdateChainsAndPrice)
 
 function callbacks:OnPickupInit(pickup)
     if not mod.CharaterInGame(mod.PLAYER_TIGRO) then return end

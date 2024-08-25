@@ -14,7 +14,7 @@
             skinColor="2" birthright="Soul, i don't feel so good..." bSkinParent="Dream" hidden="true">
     </player>
 	<player name="Teegro" skin="character_teegro.png" hp="6"
-            nameimage="PlayerName_01_Isaac.png" portrait="PlayerPortrait_Isaac.png"
+            nameimage="playername_teegro.png" portrait="playerportrait_teegro.png"
             skinColor="0" birthright="Reward for the Good Boy">
     </player>
 	<!-- <player name="TeegroB" skin="character_teegro.png" hp="2"
