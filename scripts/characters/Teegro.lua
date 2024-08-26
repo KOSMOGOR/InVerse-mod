@@ -135,8 +135,8 @@ function callbacks:UpdateChainsAndPrice(effect)
     if effect.Variant == ItemChainsVarian or effect.Variant == KeyPriceVariant then
         if not (effect.Parent and effect.Parent:Exists()) then
             effect:Remove()
-        elseif effect.Position.X ~= effect.Parent.Position.X then
-            effect.Position = Vector(effect.Parent.Position.X, effect.Position.Y)
+        elseif effect.Position.X ~= effect.Parent.Position.X or effect.Position.Y ~= effect.Parent.Position.Y then
+            effect.Position = Vector(effect.Parent.Position.X, effect.Parent.Position.Y)
         end
     end
 end
@@ -144,6 +144,8 @@ mod:AddCallback(ModCallbacks.MC_POST_EFFECT_UPDATE, callbacks.UpdateChainsAndPri
 
 function callbacks:OnPickupInit(pickup)
     if not mod.CharaterInGame(mod.PLAYER_TIGRO) then return end
+    if Game():GetLevel():GetCurrentRoomDesc().GridIndex == GridRooms.ROOM_GENESIS_IDX then return end
+    if Game():GetLevel():GetCurrentRoomDesc().Data.StageID == 35 then return end -- Death certificate rooms (originally Home rooms)
     local ind = GetPickupInd(pickup)
     if mod.Data.Teegro.lockedItems[ind] and not pickup.Child then
         LockItemSprite(pickup, mod.Data.Teegro.lockedItems[ind].touch)
