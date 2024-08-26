@@ -18,7 +18,8 @@ function callbacks:SetDefaultValues(player) -- Set Defaul Values
             hadDamageThisRoom = false,
             lastRoom = 0,
             lastRoomCleared = true,
-            bossWasKilled = false
+            bossWasKilled = false,
+            checkedRooms = {}
         }
     end
 end
@@ -432,11 +433,18 @@ function callbacks:SpawnKeyAfterBossDeath(npc)
         if ({
             [RoomType.ROOM_BOSS] = true,
             [RoomType.ROOM_DEVIL] = true,
-            [RoomType.ROOM_ANGEL] = true
+            [RoomType.ROOM_ANGEL] = true,
+            [RoomType.ROOM_MINIBOSS] = true
         })[Game():GetRoom():GetType()] then
-            local angle = math.rad(mod.rand(0, 359))
-            local vec = Vector(math.cos(angle), math.sin(angle)) * 3
-            Isaac.Spawn(5, HunterKeyVariant, 0, npc.Position, vec, nil)
+            local spawn = {1, HunterKeyVariant}
+            if Game():GetRoom():GetType() == RoomType.ROOM_MINIBOSS then
+                spawn = {mod.rand(1, 3), HunterKeyPartVariant}
+            end
+            for _ = 1, spawn[1] do
+                local angle = math.rad(mod.rand(0, 359))
+                local vec = Vector(math.cos(angle), math.sin(angle)) * 3
+                Isaac.Spawn(5, spawn[2], 0, npc.Position, vec, nil)
+            end
         end
         mod.Data.Teegro.bossWasKilled = true
     end
@@ -459,6 +467,24 @@ function callbacks:ResetTakenDamageOnNewRoom()
     end
 end
 mod:AddCallback(ModCallbacks.MC_POST_NEW_ROOM, callbacks.ResetTakenDamageOnNewRoom)
+
+function callbacks:SpawnChestInNewRoom()
+    local descriptor = Game():GetLevel():GetCurrentRoomDesc()
+    if ({
+        [GridRooms.ROOM_BLACK_MARKET_IDX] = true,
+        [GridRooms.ROOM_SECRET_SHOP_IDX] = true
+    })[descriptor.GridIndex] and not mod.Data.Teegro.checkedRooms[descriptor.SafeGridIndex] then
+        mod.Data.Teegro.checkedRooms[descriptor.SafeGridIndex] = true
+        local pos = Game():GetRoom():FindFreePickupSpawnPosition(Game():GetRoom():GetRandomPosition(0), 0, false, false)
+        Isaac.Spawn(5, HunterChestVariant, 0, pos, Vector.Zero, nil)
+    end
+end
+mod:AddCallback(ModCallbacks.MC_POST_NEW_ROOM, callbacks.SpawnChestInNewRoom)
+
+function callbacks:ResetCheckedRoom()
+    mod.Data.Teegro.checkedRooms = {}
+end
+mod:AddCallback(ModCallbacks.MC_POST_NEW_LEVEL, callbacks.ResetCheckedRoom)
 
 function callbacks:BirthrightEffect()
     local stage = Game():GetLevel():GetStage()
