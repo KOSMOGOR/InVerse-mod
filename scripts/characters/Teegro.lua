@@ -17,9 +17,10 @@ function callbacks:SetDefaultValues(player) -- Set Defaul Values
             itemsDeleteOnNewRoom = {},
             hadDamageThisRoom = false,
             lastRoom = 0,
-            lastRoomCleared = true,
+            lastRoomCheckClear = 0,
             bossWasKilled = false,
-            checkedRooms = {}
+            checkedRooms = {},
+            chestDrops = {}
         }
     end
 end
@@ -231,16 +232,18 @@ function callbacks:GrabHunterKey(pickup, collider, low)
 end
 mod:AddCallback(ModCallbacks.MC_PRE_PICKUP_COLLISION, callbacks.GrabHunterKey)
 
-function callbacks:OpenHunterChest(pickup, collider, low)
-    local rng = RNG()
-    rng:SetSeed(pickup.InitSeed, 35)
-    if collider:ToPlayer() == nil then return end
-    if pickup.Variant == HunterChestVariant and pickup:GetSprite():GetAnimation() == "Idle" and mod.Data.Teegro.keyShards >= 4 then
-        mod.Data.Teegro.keyShards = mod.Data.Teegro.keyShards - 4
+function callbacks:OnChestInit(pickup)
+    if pickup.Variant ~= HunterChestVariant then return end
+    local ind = GetPickupInd(pickup)
+    if not mod.Data.Teegro.checkedItems[ind] then
+        mod.Data.Teegro.checkedItems[ind] = true
+        local rng = RNG()
+        rng:SetSeed(pickup.InitSeed, 35)
         local spawnPickups = {}
-        local playAnim = true
+        local notItem = true
         local rand = mod.rand(1, 6, rng)
         local momCards = GetMomCards()
+        print(momCards[mod.rand(1, #momCards)])
         if rand == 5 and #momCards == 0 then rand = 4 end
         if rand == 1 then
             local rand2 = mod.rand(1, 3)
@@ -266,15 +269,9 @@ function callbacks:OpenHunterChest(pickup, collider, low)
                 table.insert(spawnPickups, {PickupVariant.PICKUP_COIN, coinSubType})
             end
         elseif rand == 2 or rand == 3 then
-            local pos = pickup.Position
             local item = GetRandomItem(mod._if(rand == 2, 0, 2), mod._if(rand == 2, nil, {ItemPoolType.POOL_TREASURE}))
-            local pickup2 = Isaac.Spawn(5, 100, item, pos, Vector.Zero, nil)
-            pickup2:GetSprite():ReplaceSpritesheet(5, "gfx/teegro/Hunter_Chest_item.png")
-            pickup2:GetSprite():LoadGraphics()
-            pickup2:GetSprite():SetOverlayFrame("Alternates", 10)
-            local ind = GetPickupInd(pickup2)
-            mod.Data.Teegro.checkedItems[ind] = true
-            playAnim = false
+            table.insert(spawnPickups, item)
+            notItem = false
         elseif rand == 4 then
             for _ = 1, 3 do
                 local card = mod.rand(56, 77)
@@ -291,16 +288,34 @@ function callbacks:OpenHunterChest(pickup, collider, low)
                 table.insert(spawnPickups, {HunterKeyPartVariant, 0})
             end
         end
-        for _, pickup1 in ipairs(spawnPickups) do
-            local angle = math.rad(mod.rand(0, 359))
-            local vec = Vector(math.cos(angle), math.sin(angle)) * 3
-            Isaac.Spawn(5, pickup1[1], pickup1[2], pickup.Position, vec, nil)
-        end
+        mod.Data.Teegro.chestDrops[ind] = {spawnPickups, notItem}
+    end
+end
+mod:AddCallback(ModCallbacks.MC_POST_PICKUP_UPDATE, callbacks.OnChestInit)
+
+function callbacks:OpenHunterChest(pickup, collider, low)
+    if collider:ToPlayer() == nil then return end
+    if pickup.Variant == HunterChestVariant and pickup:GetSprite():GetAnimation() == "Idle" and mod.Data.Teegro.keyShards >= 4 then
+        mod.Data.Teegro.keyShards = mod.Data.Teegro.keyShards - 4
         SFXManager():Play(SoundEffect.SOUND_CHEST_OPEN)
-        if playAnim then
+        local ind = GetPickupInd(pickup)
+        local drop = mod.Data.Teegro.chestDrops[ind]
+        if drop[2] then
+            for _, pickup1 in ipairs(drop[1]) do
+                local angle = math.rad(mod.rand(0, 359))
+                local vec = Vector(math.cos(angle), math.sin(angle)) * 3
+                Isaac.Spawn(5, pickup1[1], pickup1[2], pickup.Position, vec, nil)
+            end
             pickup:GetSprite():Play("Open")
             mod.Data.Teegro.itemsDeleteOnNewRoom[GetPickupInd(pickup)] = true
         else
+            local pos = pickup.Position
+            local pickup2 = Isaac.Spawn(5, 100, drop[1][1], pos, Vector.Zero, nil)
+            pickup2:GetSprite():ReplaceSpritesheet(5, "gfx/teegro/Hunter_Chest_item.png")
+            pickup2:GetSprite():LoadGraphics()
+            pickup2:GetSprite():SetOverlayFrame("Alternates", 10)
+            local ind2 = GetPickupInd(pickup2)
+            mod.Data.Teegro.checkedItems[ind2] = true
             pickup:Remove()
         end
     end
@@ -389,8 +404,9 @@ mod:AddCallback(ModCallbacks.MC_POST_NEW_ROOM, callbacks.LockPickupSpritesOnNewR
 function callbacks:CheckRoomReward()
     if not mod.CharaterInGame(mod.PLAYER_TIGRO) then return end
     local room = Game():GetRoom()
+    local gridIndex = Game():GetLevel():GetCurrentRoomDesc().SafeGridIndex
     local entities = room:GetEntities()
-    if not mod.Data.Teegro.lastRoomCleared and room:IsClear() then
+    if mod.Data.Teegro.lastRoomCheckClear == gridIndex and room:IsClear() then
         local hasRoomReward = false
         for i = 0, #entities - 1 do
             local ent = entities:Get(i)
@@ -422,7 +438,11 @@ function callbacks:CheckRoomReward()
             end
         end
     end
-    mod.Data.Teegro.lastRoomCleared = room:IsClear()
+    if not room:IsClear() then
+        mod.Data.Teegro.lastRoomCheckClear = gridIndex
+    else
+        mod.Data.Teegro.lastRoomCheckClear = nil
+    end
     if room:IsClear() then mod.Data.Teegro.bossWasKilled = false end
 end
 mod:AddCallback(ModCallbacks.MC_POST_UPDATE, callbacks.CheckRoomReward)

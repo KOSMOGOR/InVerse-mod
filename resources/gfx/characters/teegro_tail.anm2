@@ -5,13 +5,10 @@
 			<Spritesheet Path="costumes\costume_teegro_tail.png" Id="0"/>
 		</Spritesheets>
 		<Layers>
-			<Layer Name="body" Id="0" SpritesheetId="0"/>
+			<Layer Name="body0" Id="0" SpritesheetId="0"/>
 		</Layers>
 		<Nulls/>
-		<Events>
-			<Event Name="sparkle" Id="0"/>
-			<Event Name="blah" Id="1"/>
-		</Events>
+		<Events/>
 	</Content>
 	<Animations DefaultAnimation="WalkDown">
 		<Animation Name="WalkLeft" FrameNum="20" Loop="true">
