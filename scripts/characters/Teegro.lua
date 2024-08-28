@@ -191,9 +191,10 @@ function callbacks:LockedItemInteraction(pickup, collider, low)
                     Game():AddDevilRoomDeal()
                 end
                 pickup.Child:Remove()
+                mod.Data.Teegro.lockedItems[ind] = nil
             end
         end
-        return mod.Data.Teegro.lockedItems[ind].touch
+        if mod.Data.Teegro.lockedItems[ind] then return mod.Data.Teegro.lockedItems[ind].touch end
     end
 end
 mod:AddCallback(ModCallbacks.MC_PRE_PICKUP_COLLISION, callbacks.LockedItemInteraction)
@@ -632,6 +633,7 @@ function callbacks:RenderDreamBookCharges()
         end
     end
     if TeegroPosition == nil or not mod.Data.Teegro then return end
+    local room = Game():GetRoom()
     if IsActionHold(ButtonAction.ACTION_MAP) then
         tabHold = tabHold + 1
     else 
@@ -647,11 +649,16 @@ function callbacks:RenderDreamBookCharges()
             alpha = 1
             RenderSincePickup = 60
         end
-        local coords = Game():GetRoom():WorldToScreenPosition(TeegroPosition) - Vector(0, 40)
-        spr:Render(coords - Vector(6, 0), Vector.Zero, Vector.Zero)
+        local coords1 = room:WorldToScreenPosition(TeegroPosition) - Vector(6, 40)
+        local coords2 = Vector(coords1.X + 8, coords1.Y - 4)
+        if room:IsMirrorWorld() then
+            coords1.X = Isaac.GetScreenWidth() - coords1.X
+            coords2.X = Isaac.GetScreenWidth() - coords2.X
+        end
+        spr:Render(coords1, Vector.Zero, Vector.Zero)
         spr:SetFrame("Idle", mod.Data.Teegro.keyShards % 4)
         spr.Color = Color(1, 1, 1, alpha)
-        f:DrawStringScaled(mod.Data.Teegro.keyShards // 4, coords.X + 2, coords.Y - 4, 0.65, 0.65, KColor(1, 1, 1, alpha), 0, true)
+        f:DrawStringScaled(mod.Data.Teegro.keyShards // 4, coords2.X, coords2.Y, 0.65, 0.65, KColor(1, 1, 1, alpha), 0, true)
     end
     RenderSincePickup = math.min(RenderSincePickup + 1, 180)
 end
