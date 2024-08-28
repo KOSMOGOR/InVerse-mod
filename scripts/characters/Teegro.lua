@@ -6,6 +6,8 @@ local HunterKeyVariant = Isaac.GetEntityVariantByName("Hunter Key")
 local HunterKeyPartVariant = Isaac.GetEntityVariantByName("Hunter Key Part")
 local KeyPriceVariant = Isaac.GetEntityVariantByName("Key Price")
 local HunterChestVariant = Isaac.GetEntityVariantByName("Hunter Chest")
+local DoubleHunterKeyVariant = Isaac.GetEntityVariantByName("Double Hunter Key")
+local HalfHunterKeyVariant = Isaac.GetEntityVariantByName("Half Hunter Key")
 local RenderSincePickup = 0
 
 function callbacks:SetDefaultValues(player) -- Set Defaul Values
@@ -27,12 +29,12 @@ end
 mod:AddCallback(ModCallbacks.MC_POST_PLAYER_UPDATE, callbacks.SetDefaultValues)
 mod:AddCallback(ModCallbacks.MC_POST_PLAYER_INIT, callbacks.SetDefaultValues)
 
-local function SelectRandomWeights(table, RNG)
+local function SelectRandomWeights(table, rng)
     local sum = 0
     for i = 1, #table do
         sum = sum + table[i][1]
     end
-    local n = mod.rand(1, sum, RNG)
+    local n = mod.rand(1, sum, rng)
     sum = 0
     for i = 1, #table do
         sum = sum + table[i][1]
@@ -42,7 +44,7 @@ local function SelectRandomWeights(table, RNG)
     end
 end
 
-local function GetRandomItem(minimumQuality, pools)
+local function GetRandomItem(minimumQuality, pools, rng)
     local itemPool = Game():GetItemPool()
     local items = {}
     if pools == nil then pools = {0, 1, 2, 3, 4, 5, 6, 26} end
@@ -59,25 +61,22 @@ local function GetRandomItem(minimumQuality, pools)
         itemPool:ResetRoomBlacklist()
         if #items == 0 then items = {CollectibleType.COLLECTIBLE_BREAKFAST} end
     end
-    local item = items[mod.rand(1, #items)]
+    local item = items[mod.rand(1, #items, rng)]
     itemPool:RemoveCollectible(item)
     return item
 end
 
-local function GetMomCards()
-    local cards = {}
-    local itemConfig = Isaac.GetItemConfig()
-    for i = 1, #itemConfig:GetCards() do
-        local el = itemConfig:GetCard(i)
-        if el and mod.Data.GlobalData.CardsCanSpawn[el.HudAnim] then
-            table.insert(cards, el.ID)
-        end
-    end
-    return cards
-end
-
 local function GetPickupInd(pickup)
     return tostring(pickup.InitSeed)
+end
+
+local function GetHunterKeyValue(pickup)
+    return ({
+        [HunterKeyVariant] = 4,
+        [HunterKeyPartVariant] = 1,
+        [DoubleHunterKeyVariant] = 8,
+        [HalfHunterKeyVariant] = 2,
+    })[pickup.Variant]
 end
 
 mod.Characters[mod.PLAYER_TIGRO] = {
@@ -120,7 +119,8 @@ local function LockItemSprite(item, touch)
         effect1.Parent = item
         effect2.Parent = effect1
     else
-        item.Price = 0
+        item.AutoUpdatePrice = false
+        item.Price = -1000
         item.SpriteOffset = Vector(0, 14)
         item:GetSprite():SetFrame("Idle", 0)
         item:GetSprite():RemoveOverlay()
@@ -219,12 +219,15 @@ mod:AddCallback(ModCallbacks.MC_POST_PICKUP_UPDATE, callbacks.UnlockItem)
 
 function callbacks:GrabHunterKey(pickup, collider, low)
     if collider:ToPlayer() == nil then return end
-    if pickup.Variant == HunterKeyVariant or pickup.Variant == HunterKeyPartVariant then
+    local value = GetHunterKeyValue(pickup)
+    if value then
         if pickup:GetSprite():IsPlaying("Collect") then return true end
         pickup:GetSprite():Play("Collect")
-        mod.Data.Teegro.keyShards = mod.Data.Teegro.keyShards + mod._if(pickup.Variant == HunterKeyVariant, 4, 1)
+        local keys1 = mod.Data.Teegro.keyShards // 4
+        mod.Data.Teegro.keyShards = mod.Data.Teegro.keyShards + value
+        local keys2 = mod.Data.Teegro.keyShards // 4
         SFXManager():Play(
-            mod._if(pickup.Variant == HunterKeyVariant or mod.Data.Teegro.keyShards % 4 == 0, SoundEffect.SOUND_DEATH_BURST_BONE, SoundEffect.SOUND_BONE_HEART)
+            mod._if(keys2 > keys1, SoundEffect.SOUND_DEATH_BURST_BONE, SoundEffect.SOUND_BONE_HEART)
         )
         RenderSincePickup = 0
         return true
@@ -240,55 +243,73 @@ function callbacks:OnChestInit(pickup)
         local rng = RNG()
         rng:SetSeed(pickup.InitSeed, 35)
         local spawnPickups = {}
-        local notItem = true
-        local rand = mod.rand(1, 6, rng)
-        local momCards = GetMomCards()
-        print(momCards[mod.rand(1, #momCards)])
-        if rand == 5 and #momCards == 0 then rand = 4 end
+        local rand = mod.rand(1, 5, rng)
         if rand == 1 then
-            local rand2 = mod.rand(1, 3)
-            local rand3 = mod.rand(3, 7)
+            local rand2 = mod.rand(1, 3, rng)
+            local rand3 = mod.rand(3, 7, rng)
             if rand2 == 1 then
-                table.insert(spawnPickups, {PickupVariant.PICKUP_BOMB, BombSubType.BOMB_GOLDEN})
+                table.insert(spawnPickups, {
+                    Variant = PickupVariant.PICKUP_BOMB,
+                    SubType = BombSubType.BOMB_GOLDEN,
+                    anm2 = "005.043_golden bomb"
+                })
             elseif rand2 == 2 then
-                table.insert(spawnPickups, {PickupVariant.PICKUP_KEY, KeySubType.KEY_GOLDEN})
+                table.insert(spawnPickups, {
+                    Variant = PickupVariant.PICKUP_KEY,
+                    SubType = KeySubType.KEY_GOLDEN,
+                    anm2 = "005.032_golden key"
+                })
             else
-                local tt = Game():GetItemPool():GetTrinket()
+                local tt = Game():GetItemPool():GetTrinket() | TrinketType.TRINKET_GOLDEN_FLAG
                 Game():GetItemPool():RemoveTrinket(tt)
-                table.insert(spawnPickups, {PickupVariant.PICKUP_TRINKET, tt | TrinketType.TRINKET_GOLDEN_FLAG})
+                -- local anm2 = Isaac.GetItemConfig():GetTrinket(tt).GfxFileName
+                table.insert(spawnPickups, {
+                    Variant = PickupVariant.PICKUP_TRINKET,
+                    SubType = tt
+                    -- anm2 = anm2:sub(5, #anm2 - 5)
+                })
             end
             for _ = 1, rand3 do
-                local coinSubType = SelectRandomWeights({
-                    {9263, CoinSubType.COIN_PENNY},
-                    {468, CoinSubType.COIN_NICKEL},
-                    {100, CoinSubType.COIN_DIME},
-                    {94, CoinSubType.COIN_LUCKYPENNY},
-                    {25, CoinSubType.COIN_STICKYNICKEL},
-                    {50, CoinSubType.COIN_GOLDEN},
+                local coin = SelectRandomWeights({
+                    {9263, {CoinSubType.COIN_PENNY, "005.021_penny"}},
+                    {468, {CoinSubType.COIN_NICKEL, "005.022_nickel"}},
+                    {100, {CoinSubType.COIN_DIME, "005.023_dime"}},
+                    {94, {CoinSubType.COIN_LUCKYPENNY, "005.026_lucky penny"}},
+                    {25, {CoinSubType.COIN_STICKYNICKEL, "005.025_sticky nickel"}},
+                    {50, {CoinSubType.COIN_GOLDEN, "005.027_golden penny"}},
                 })
-                table.insert(spawnPickups, {PickupVariant.PICKUP_COIN, coinSubType})
+                table.insert(spawnPickups, {
+                    Variant = PickupVariant.PICKUP_COIN,
+                    SubType = coin[1],
+                    anm2 = coin[2]
+                })
             end
         elseif rand == 2 or rand == 3 then
-            local item = GetRandomItem(mod._if(rand == 2, 0, 2), mod._if(rand == 2, nil, {ItemPoolType.POOL_TREASURE}))
-            table.insert(spawnPickups, item)
-            notItem = false
+            local item = GetRandomItem(mod._if(rand == 2, 0, 2), mod._if(rand == 2, nil, {ItemPoolType.POOL_TREASURE}), rng)
+            table.insert(spawnPickups, {
+                Variant = 100,
+                SubType = item
+            })
         elseif rand == 4 then
             for _ = 1, 3 do
-                local card = mod.rand(56, 77)
-                table.insert(spawnPickups, {PickupVariant.PICKUP_TAROTCARD, card})
+                local card = mod.rand(56, 77, rng)
+                table.insert(spawnPickups, {
+                    Variant = PickupVariant.PICKUP_TAROTCARD,
+                    SubType = card,
+                    anm2 = "005.300.14_reverse tarot card"
+                })
             end
         elseif rand == 5 then
-            local card = mod.rand(56, 77)
-            table.insert(spawnPickups, {PickupVariant.PICKUP_TAROTCARD, card})
-            local momCard = momCards[mod.rand(1, #momCards)]
-            table.insert(spawnPickups, {PickupVariant.PICKUP_TAROTCARD, momCard})
-        elseif rand == 6 then
-            local rand2 = mod.rand(1, 7)
+            local rand2 = mod.rand(1, 7, rng)
             for _ = 1, rand2 do
-                table.insert(spawnPickups, {HunterKeyPartVariant, 0})
+                table.insert(spawnPickups, {
+                    Variant = HunterKeyPartVariant,
+                    SubType = 0,
+                    anm2 = "items/pickups/hunter_key_part"
+                })
             end
         end
-        mod.Data.Teegro.chestDrops[ind] = {spawnPickups, notItem}
+        mod.Data.Teegro.chestDrops[ind] = spawnPickups
     end
 end
 mod:AddCallback(ModCallbacks.MC_POST_PICKUP_UPDATE, callbacks.OnChestInit)
@@ -300,22 +321,23 @@ function callbacks:OpenHunterChest(pickup, collider, low)
         SFXManager():Play(SoundEffect.SOUND_CHEST_OPEN)
         local ind = GetPickupInd(pickup)
         local drop = mod.Data.Teegro.chestDrops[ind]
-        if drop[2] then
-            for _, pickup1 in ipairs(drop[1]) do
+        if drop[1].Variant ~= 100 then
+            for _, pickup1 in ipairs(drop) do
                 local angle = math.rad(mod.rand(0, 359))
                 local vec = Vector(math.cos(angle), math.sin(angle)) * 3
-                Isaac.Spawn(5, pickup1[1], pickup1[2], pickup.Position, vec, nil)
+                Isaac.Spawn(5, pickup1.Variant, pickup1.SubType, pickup.Position, vec, nil)
             end
             pickup:GetSprite():Play("Open")
             mod.Data.Teegro.itemsDeleteOnNewRoom[GetPickupInd(pickup)] = true
         else
             local pos = pickup.Position
-            local pickup2 = Isaac.Spawn(5, 100, drop[1][1], pos, Vector.Zero, nil)
+            local pickup2 = Isaac.Spawn(5, 100, drop[1].SubType, pos, Vector.Zero, nil)
+            local ind2 = GetPickupInd(pickup2)
+            mod.Data.Teegro.checkedItems[ind2] = true
             pickup2:GetSprite():ReplaceSpritesheet(5, "gfx/teegro/Hunter_Chest_item.png")
             pickup2:GetSprite():LoadGraphics()
             pickup2:GetSprite():SetOverlayFrame("Alternates", 10)
-            local ind2 = GetPickupInd(pickup2)
-            mod.Data.Teegro.checkedItems[ind2] = true
+            for i = 1, 4 do pickup2:Update() end
             pickup:Remove()
         end
     end
@@ -323,14 +345,11 @@ end
 mod:AddCallback(ModCallbacks.MC_PRE_PICKUP_COLLISION, callbacks.OpenHunterChest)
 
 function callbacks:HunterKeyUpdate(pickup)
-    if pickup.Variant == HunterKeyVariant or pickup.Variant == HunterKeyPartVariant then
+    if GetHunterKeyValue(pickup) then
         if pickup:GetSprite():IsPlaying("Collect") and pickup:GetSprite():GetFrame() >= 5 then
             pickup:Remove()
         elseif pickup:GetSprite():IsEventTriggered("DropSound") then
             SFXManager():Play(SoundEffect.SOUND_BONE_DROP)
-        elseif pickup.Variant == HunterKeyPartVariant and pickup:GetSprite():IsPlaying("Appear") and pickup:GetSprite():GetFrame() == 1 then
-            pickup:GetSprite():ReplaceSpritesheet(0, "gfx/items/pickups/pickup_hunter_key_part_" .. mod.rand(1, 4) .. ".png")
-            pickup:GetSprite():LoadGraphics()
         end
     end
 end
@@ -371,6 +390,22 @@ function callbacks:SpawnHunterKey(pickup)
             pickup.Price = 5
         end
     end
+    local playerWithEquality = mod.CharaterHasTrinket(TrinketType.TRINKET_EQUALITY)
+    local playerWithBundle = mod.CharaterHasTrinket(CollectibleType.COLLECTIBLE_HUMBLEING_BUNDLE)
+    if (playerWithEquality and playerWithEquality:GetNumCoins() == playerWithEquality:GetNumBombs() and playerWithEquality:GetNumBombs() == playerWithEquality:GetNumKeys()) or
+        (playerWithBundle and mod.rand(1, 2, rng) == 1) then
+        if pickup.Variant == HunterKeyVariant then
+            pickup:Morph(5, DoubleHunterKeyVariant, 0, false, true)
+        elseif pickup.Variant == HunterKeyPartVariant then
+            pickup:Morph(5, HalfHunterKeyVariant, 0, false, true)
+        end
+    end
+    if GetHunterKeyValue(pickup) == 1 then
+        pickup:GetSprite():ReplaceSpritesheet(0, "gfx/items/pickups/pickup_hunter_key_part_" .. mod.rand(1, 4) .. ".png")
+    elseif GetHunterKeyValue(pickup) == 2 then
+        pickup:GetSprite():ReplaceSpritesheet(0, "gfx/items/pickups/pickup_hunter_key_part_double_" .. mod.rand(1, 2) .. ".png")
+    end
+    pickup:GetSprite():LoadGraphics()
 end
 mod:AddCallback(ModCallbacks.MC_POST_PICKUP_UPDATE, callbacks.SpawnHunterKey)
 
@@ -458,7 +493,7 @@ function callbacks:SpawnKeyAfterBossDeath(npc)
         })[Game():GetRoom():GetType()] then
             local spawn = {1, HunterKeyVariant}
             if Game():GetRoom():GetType() == RoomType.ROOM_MINIBOSS then
-                spawn = {mod.rand(1, 3), HunterKeyPartVariant}
+                spawn = {mod.rand(1, 3, Game():GetRoom():GetAwardSeed()), HunterKeyPartVariant}
             end
             for _ = 1, spawn[1] do
                 local angle = math.rad(mod.rand(0, 359))
@@ -513,7 +548,7 @@ function callbacks:BirthrightEffect()
         rng:SetSeed(Game():GetRoom():GetAwardSeed(), 35)
         for i = 1, 4 do
             local pos = Vector(200 + mod._if(i % 2 == 0, 240, 0), 200 + mod._if(i > 2, 160, 0))
-            local item = GetRandomItem(0)
+            local item = GetRandomItem(0, Game():GetRoom():GetAwardSeed())
             local pickup = Isaac.Spawn(5, 100, item, pos, Vector.Zero, nil):ToPickup()
             local ind = GetPickupInd(pickup)
             mod.Data.Teegro.itemsDeleteOnNewRoom[ind] = true
@@ -527,6 +562,55 @@ function callbacks:BirthrightEffect()
     end
 end
 mod:AddCallback(ModCallbacks.MC_POST_NEW_LEVEL, callbacks.BirthrightEffect)
+
+local GuppyEyeOffsets = {
+	[1] = {Vector(0, 4)},
+	[2] = {Vector(8, 4), Vector(-8, 4)},
+	[3] = {Vector(0, 8), Vector(-12, 0), Vector(12, 0)},
+	[4] = {Vector(0, 12), Vector(-12, 6), Vector(12, 6), Vector(0, 0)},
+	[5] = {Vector(0, 16), Vector(-9, 9), Vector(9, 9), Vector(-6, 0), Vector(6, 0)},
+	[6] = {Vector(-6, 16), Vector(6, 16), Vector(-9, 8), Vector(9, 8), Vector(-6, 0), Vector(6, 0)},
+	[7] = {Vector(-6, 16), Vector(6, 16), Vector(-12, 8), Vector(0, 8), Vector(12, 8), Vector(-6, 0), Vector(6, 0)},
+	[8] = {Vector(0, 16), Vector(9, 14), Vector(-9, 14), Vector(12, 8), Vector(-12, 8), Vector(9, 2), Vector(-9, 2), Vector(0,0)}
+}
+function callbacks:GuppysEyeFunctionality(pickup)
+    if not mod.CharaterHasItem(CollectibleType.COLLECTIBLE_GUPPYS_EYE) or pickup.Variant ~= HunterChestVariant then return end
+    if pickup:GetSprite():GetAnimation() == "Open" then return end
+    local ind = GetPickupInd(pickup)
+    local drop = mod.Data.Teegro.chestDrops[ind]
+    if not drop then return end
+    local spr = Sprite()
+    spr.Color = Color(spr.Color.R, spr.Color.G, spr.Color.B, 0.6, spr.Color.RO, spr.Color.GO, spr.Color.BO)
+    spr.Scale = Vector(0.5, 0.5)
+    for i, dr in ipairs(drop) do
+        local offset = Vector(0, -12)
+        if dr.Variant == 100 then
+            spr:Load("gfx/005.100_collectible.anm2", true)
+            spr:SetFrame("Idle", 0)
+            if Game():GetLevel():GetCurses() & LevelCurse.CURSE_OF_BLIND ~= 0 then
+                spr:ReplaceSpritesheet(1, "gfx/items/collectibles/questionmark.png")
+            else
+                spr:ReplaceSpritesheet(1, Isaac.GetItemConfig():GetCollectible(dr.SubType).GfxFileName)
+            end
+            offset = offset + Vector(0, 12)
+            spr:LoadGraphics()
+        elseif dr.Variant == PickupVariant.PICKUP_TRINKET then
+            spr:Load("gfx/005.350_trinket.anm2", true)
+            spr:SetFrame("Idle", 0)
+            spr:ReplaceSpritesheet(0, Isaac.GetItemConfig():GetTrinket(dr.SubType).GfxFileName)
+            spr:LoadGraphics()
+        else
+            spr:Load("gfx/" .. dr.anm2 .. ".anm2", true)
+            spr:SetFrame("Idle", 0)
+            spr:LoadGraphics()
+            if dr.Variant == PickupVariant.PICKUP_TAROTCARD then
+                offset = offset + Vector(0, 4)
+            end
+        end
+        spr:Render(Game():GetRoom():WorldToScreenPosition(pickup.Position) + offset + GuppyEyeOffsets[#drop][i] * 0.8)
+    end
+end
+mod:AddCallback(ModCallbacks.MC_POST_PICKUP_RENDER, callbacks.GuppysEyeFunctionality)
 
 local function IsActionHold(action)
     for i = 0, Game():GetNumPlayers() - 1 do

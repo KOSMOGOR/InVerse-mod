@@ -131,9 +131,9 @@ function mod.GetPlayerNum(player)
 end
 
 function mod.rand(min, max, rng)
-    if not rng then
+    if not rng or type(rng) == "number" then
         rng = RNG()
-        rng:SetSeed(Random(), 35)
+        rng:SetSeed(mod._if(type(rng) == "number", rng, Random()), 35)
     end
     return rng:RandomInt(max - min + 1) + min
     -- return math.random(min, max)
@@ -195,6 +195,22 @@ function mod.CharaterHasBirthright(charType)
     for i = 0, Game():GetNumPlayers() - 1 do
         if Isaac.GetPlayer(i):GetPlayerType() == charType and Isaac.GetPlayer(i):HasCollectible(CollectibleType.COLLECTIBLE_BIRTHRIGHT) then
             return true
+        end
+    end
+end
+
+function mod.CharaterHasItem(item)
+    for i = 0, Game():GetNumPlayers() - 1 do
+        if Isaac.GetPlayer(i):HasCollectible(item) then
+            return Isaac.GetPlayer(i)
+        end
+    end
+end
+
+function mod.CharaterHasTrinket(trinket)
+    for i = 0, Game():GetNumPlayers() - 1 do
+        if Isaac.GetPlayer(i):HasTrinket(trinket) then
+            return Isaac.GetPlayer(i)
         end
     end
 end
@@ -297,7 +313,9 @@ end
 mod:AddCallback(ModCallbacks.MC_POST_PLAYER_UPDATE, mod.OnGetBR)
 
 mod:AddCallback(ModCallbacks.MC_POST_UPDATE, function()
-    local entities = Game():GetRoom():GetEntities()
+    for i, entity in ipairs(Isaac.GetRoomEntities()) do
+        
+    end
 end)
 
 include("scripts.characters.Dream")

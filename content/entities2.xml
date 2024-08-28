@@ -35,4 +35,12 @@
 	    <preload-snd id="22" /> <!-- CHEST_OPEN -->
 	    <preload-snd id="156" /> <!-- UNLOCK00 -->
     </entity>
+    <entity anm2path="items/pickups/hunter_key_double.anm2" baseHP="0" boss="0" champion="0" collisionDamage="0" collisionMass="3" collisionRadius="12" friction="1" id="5" variant="1004" name="Double Hunter Key" numGridCollisionPoints="24" shadowSize="13" stageHP="0">
+        <gibs amount="0" blood="0" bone="0" eye="0" gut="0" large="0" />
+	    <preload-snd id="204" />
+    </entity>
+    <entity anm2path="items/pickups/hunter_key_part.anm2" baseHP="0" boss="0" champion="0" collisionDamage="0" collisionMass="3" collisionRadius="12" friction="1" id="5" variant="1005" name="Half Hunter Key" numGridCollisionPoints="24" shadowSize="13" stageHP="0">
+        <gibs amount="0" blood="0" bone="0" eye="0" gut="0" large="0" />
+	    <preload-snd id="461" />
+    </entity>
 </entities>
