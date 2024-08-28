@@ -120,10 +120,7 @@ local function LockItemSprite(item, touch)
         effect2.Parent = effect1
     else
         item.AutoUpdatePrice = false
-        item.Price = -1000
-        item.SpriteOffset = Vector(0, 14)
-        item:GetSprite():SetFrame("Idle", 0)
-        item:GetSprite():RemoveOverlay()
+        item.Price = -10
         local effect = Isaac.Spawn(1000, KeyPriceVariant, 0, item.Position, Vector.Zero, nil):ToEffect()
         effect.DepthOffset = -10
         effect.SpriteOffset = Vector(0, 10)
@@ -374,30 +371,30 @@ function callbacks:SpawnHunterKey(pickup)
     if pickup.Variant == 30 and pickup.Price == 0 then
         local r = mod.rand(1, 1000, rng)
         if r <= 5 then
-            pickup:Morph(5, HunterKeyVariant, 0, false, true)
+            pickup:Morph(5, HunterKeyVariant, 0, true, true)
         elseif r <= 250 + 5 then
-            pickup:Morph(5, HunterKeyPartVariant, 0, false, true)
+            pickup:Morph(5, HunterKeyPartVariant, 0, true, true)
         end
     elseif pickup.Price ~= 0 then
         local r = mod.rand(1, 100, rng)
         if r <= 2 then
-            pickup:Morph(5, HunterKeyVariant, 0, false, true)
+            pickup:Morph(5, HunterKeyVariant, 0, true, true)
             pickup.AutoUpdatePrice = false
             pickup.Price = 15
         elseif r <= 25 + 2 then
-            pickup:Morph(5, HunterKeyPartVariant, 0, false, true)
+            pickup:Morph(5, HunterKeyPartVariant, 0, true, true)
             pickup.AutoUpdatePrice = false
             pickup.Price = 5
         end
     end
     local playerWithEquality = mod.CharaterHasTrinket(TrinketType.TRINKET_EQUALITY)
-    local playerWithBundle = mod.CharaterHasTrinket(CollectibleType.COLLECTIBLE_HUMBLEING_BUNDLE)
+    local playerWithBundle = mod.CharaterHasItem(CollectibleType.COLLECTIBLE_HUMBLEING_BUNDLE)
     if (playerWithEquality and playerWithEquality:GetNumCoins() == playerWithEquality:GetNumBombs() and playerWithEquality:GetNumBombs() == playerWithEquality:GetNumKeys()) or
         (playerWithBundle and mod.rand(1, 2, rng) == 1) then
         if pickup.Variant == HunterKeyVariant then
-            pickup:Morph(5, DoubleHunterKeyVariant, 0, false, true)
+            pickup:Morph(5, DoubleHunterKeyVariant, 0, true, true)
         elseif pickup.Variant == HunterKeyPartVariant then
-            pickup:Morph(5, HalfHunterKeyVariant, 0, false, true)
+            pickup:Morph(5, HalfHunterKeyVariant, 0, true, true)
         end
     end
     if GetHunterKeyValue(pickup) == 1 then
