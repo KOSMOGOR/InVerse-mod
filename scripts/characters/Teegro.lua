@@ -104,6 +104,12 @@ mod:AddCallback(ModCallbacks.MC_POST_PLAYER_INIT, callbacks.OnInit)
 
 local ItemChainsVarian = Isaac.GetEntityVariantByName("ItemChains")
 local function LockItemSprite(item, touch)
+    if item.Child then
+        if item.Child.Child then
+            item.Child.Child:Remove()
+        end
+        item.Child:Remove()
+    end
     local ind = GetPickupInd(item)
     if not touch then
         local effect1 = Isaac.Spawn(1000, ItemChainsVarian, 0, item.Position, Vector.Zero, nil):ToEffect()
@@ -146,9 +152,6 @@ function callbacks:OnPickupInit(pickup)
     if Game():GetLevel():GetCurrentRoomDesc().GridIndex == GridRooms.ROOM_GENESIS_IDX then return end
     if Game():GetLevel():GetCurrentRoomDesc().Data.StageID == 35 then return end -- Death certificate rooms (originally Home rooms)
     local ind = GetPickupInd(pickup)
-    if mod.Data.Teegro.lockedItems[ind] and not pickup.Child then
-        LockItemSprite(pickup, mod.Data.Teegro.lockedItems[ind].touch)
-    end
     if pickup.Variant == PickupVariant.PICKUP_COIN and not mod.Data.Teegro.checkedItems[ind] then
         if Isaac.GetPlayer(0):GetNumCoins() >= 30 and mod.rand(1, 10, pickup.InitSeed) == 1 then
             pickup:Morph(5, HunterKeyPartVariant, 0, true, false)
@@ -156,8 +159,17 @@ function callbacks:OnPickupInit(pickup)
             mod.Data.Teegro.checkedItems[ind] = true
         end
     end
-    if pickup.Variant == 100 and not mod.Data.Teegro.checkedItems[ind] and pickup:GetSprite():GetAnimation() ~= "Empty" then
-        mod.Data.Teegro.checkedItems[ind] = true
+    if mod.Data.Teegro.checkedItems[ind] and pickup.Variant == 100 and mod.Data.Teegro.checkedItems[ind] ~= pickup.SubType then
+        mod.Data.Teegro.checkedItems[ind] = nil
+    end
+    if mod.Data.Teegro.lockedItems[ind] and mod.Data.Teegro.lockedItems[ind].Variant == 100 and pickup.Variant ~= 100 then
+        mod.Data.Teegro.lockedItems[ind] = nil
+    end
+    if mod.Data.Teegro.lockedItems[ind] and not pickup.Child then
+        LockItemSprite(pickup, mod.Data.Teegro.lockedItems[ind].touch)
+    end
+    if pickup.Variant == 100 and not mod.Data.Teegro.checkedItems[ind]  and pickup:GetSprite():GetAnimation() ~= "Empty"then
+        mod.Data.Teegro.checkedItems[ind] = pickup.SubType
         if Isaac.GetItemConfig():GetCollectible(pickup.SubType):HasTags(ItemConfig.TAG_QUEST) or Game():GetRoom():GetType() == RoomType.ROOM_BOSS then return end
         local cost = 4
         local touch = false
@@ -168,7 +180,7 @@ function callbacks:OnPickupInit(pickup)
             elseif mod.trueTable({-1, -7, 15})[pickup.Price] then
                 cost = 8
                 touch = true
-            elseif pickup.Price == -6 or pickup.Price > 0 then
+            elseif mod.trueTable({-6, -10})[pickup.Price] or pickup.Price > 0 then
                 cost = 4
                 touch = true
             end
@@ -176,7 +188,9 @@ function callbacks:OnPickupInit(pickup)
         end
         mod.Data.Teegro.lockedItems[ind] = {
             cost = cost,
-            touch = touch
+            touch = touch,
+            Variant = pickup.Variant,
+            SubType = pickup.SubType
         }
         LockItemSprite(pickup, touch)
     end
@@ -201,7 +215,7 @@ function callbacks:LockedItemInteraction(pickup, collider, low)
                 mod.Data.Teegro.lockedItems[ind] = nil
             end
         end
-        if mod.Data.Teegro.lockedItems[ind] then return mod.Data.Teegro.lockedItems[ind].touch end
+        return mod.Data.Teegro.lockedItems[ind].touch
     end
 end
 mod:AddCallback(ModCallbacks.MC_PRE_PICKUP_COLLISION, callbacks.LockedItemInteraction)
@@ -249,7 +263,7 @@ function callbacks:OnChestInit(pickup)
         rng:SetSeed(pickup.InitSeed, 35)
         local spawnPickups = {}
         local lowerBound = mod._if(Game():GetLevel():GetStage() == LevelStage.STAGE6, 4, 1)
-        local rand = mod.rand(1, 5, rng)
+        local rand = mod.rand(lowerBound, 5, rng)
         if rand == 1 then
             local rand2 = mod.rand(1, 3, rng)
             local rand3 = mod.rand(3, 7, rng)
@@ -339,7 +353,7 @@ function callbacks:OpenHunterChest(pickup, collider, low)
             local pos = pickup.Position
             local pickup2 = Isaac.Spawn(5, 100, drop[1].SubType, pos, Vector.Zero, nil)
             local ind2 = GetPickupInd(pickup2)
-            mod.Data.Teegro.checkedItems[ind2] = true
+            mod.Data.Teegro.checkedItems[ind2] = pickup2.SubType
             pickup2:GetSprite():ReplaceSpritesheet(5, "gfx/teegro/Hunter_Chest_item.png")
             pickup2:GetSprite():LoadGraphics()
             pickup2:GetSprite():SetOverlayFrame("Alternates", 10)

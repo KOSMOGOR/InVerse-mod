@@ -152,7 +152,7 @@ function mod.trueTable(t)
     for _, value in ipairs(t) do
         t1[value] = true
     end
-    return t
+    return t1
 end
 
 function mod.AddTrinketAsItem(player, trinket)
