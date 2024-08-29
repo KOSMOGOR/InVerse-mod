@@ -149,7 +149,7 @@ end
 
 function mod.trueTable(t)
     local t1 = {}
-    for _, value in t do
+    for _, value in ipairs(t) do
         t1[value] = true
     end
     return t

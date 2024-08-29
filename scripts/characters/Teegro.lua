@@ -149,6 +149,13 @@ function callbacks:OnPickupInit(pickup)
     if mod.Data.Teegro.lockedItems[ind] and not pickup.Child then
         LockItemSprite(pickup, mod.Data.Teegro.lockedItems[ind].touch)
     end
+    if pickup.Variant == PickupVariant.PICKUP_COIN and not mod.Data.Teegro.checkedItems[ind] then
+        if Isaac.GetPlayer(0):GetNumCoins() >= 30 and mod.rand(1, 10, pickup.InitSeed) == 1 then
+            pickup:Morph(5, HunterKeyPartVariant, 0, true, false)
+        else
+            mod.Data.Teegro.checkedItems[ind] = true
+        end
+    end
     if pickup.Variant == 100 and not mod.Data.Teegro.checkedItems[ind] and pickup:GetSprite():GetAnimation() ~= "Empty" then
         mod.Data.Teegro.checkedItems[ind] = true
         if Isaac.GetItemConfig():GetCollectible(pickup.SubType):HasTags(ItemConfig.TAG_QUEST) or Game():GetRoom():GetType() == RoomType.ROOM_BOSS then return end
@@ -241,6 +248,7 @@ function callbacks:OnChestInit(pickup)
         local rng = RNG()
         rng:SetSeed(pickup.InitSeed, 35)
         local spawnPickups = {}
+        local lowerBound = mod._if(Game():GetLevel():GetStage() == LevelStage.STAGE6, 4, 1)
         local rand = mod.rand(1, 5, rng)
         if rand == 1 then
             local rand2 = mod.rand(1, 3, rng)
@@ -282,13 +290,7 @@ function callbacks:OnChestInit(pickup)
                     anm2 = coin[2]
                 })
             end
-        elseif rand == 2 or rand == 3 then
-            local item = GetRandomItem(mod._if(rand == 2, 0, 2), mod._if(rand == 2, nil, {ItemPoolType.POOL_TREASURE}), rng)
-            table.insert(spawnPickups, {
-                Variant = 100,
-                SubType = item
-            })
-        elseif rand == 4 then
+        elseif rand == 2 then
             for _ = 1, 3 do
                 local card = mod.rand(56, 77, rng)
                 table.insert(spawnPickups, {
@@ -297,7 +299,7 @@ function callbacks:OnChestInit(pickup)
                     anm2 = "005.300.14_reverse tarot card"
                 })
             end
-        elseif rand == 5 then
+        elseif rand == 3 then
             local rand2 = mod.rand(1, 7, rng)
             for _ = 1, rand2 do
                 table.insert(spawnPickups, {
@@ -306,6 +308,12 @@ function callbacks:OnChestInit(pickup)
                     anm2 = "items/pickups/hunter_key_part"
                 })
             end
+        elseif rand == 4 or rand == 5 then
+            local item = GetRandomItem(mod._if(rand == 2, 0, 2), mod._if(rand == 2, nil, {ItemPoolType.POOL_TREASURE}), rng)
+            table.insert(spawnPickups, {
+                Variant = 100,
+                SubType = item
+            })
         end
         mod.Data.Teegro.chestDrops[ind] = spawnPickups
     end
