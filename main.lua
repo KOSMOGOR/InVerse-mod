@@ -147,6 +147,14 @@ function mod.keys(t)
     return keys
 end
 
+function mod.trueTable(t)
+    local t1 = {}
+    for _, value in t do
+        t1[value] = true
+    end
+    return t
+end
+
 function mod.AddTrinketAsItem(player, trinket)
     local trinket1 = player:GetTrinket(0)
     local trinket2 = player:GetTrinket(1)

@@ -302,11 +302,7 @@ function callbacks:MomentuumBehavior(npc)
                 elseif pickups[i].Variant == PickupVariant.PICKUP_COLLECTIBLE then
                     if pickups[i].SubType == mod.COLLECTIBLE_DREAMS_DREAM_BOOK_ACTIVE then
                         pickups[i]:Morph(EntityType.ENTITY_PICKUP, PickupVariant.PICKUP_COLLECTIBLE, mod.COLLECTIBLE_DREAMS_DREAM_BOOK_PASSIVE)
-                    elseif ({
-                        [CollectibleType.COLLECTIBLE_DECK_OF_CARDS] = true,
-                        [CollectibleType.COLLECTIBLE_STARTER_DECK] = true,
-                        [CollectibleType.COLLECTIBLE_BOOSTER_PACK] = true
-                    })[pickups[i].SubType] and mod.Data.GlobalData.ItemsCanSpawn["Glitched Deck"] then
+                    elseif mod.trueTable({CollectibleType.COLLECTIBLE_DECK_OF_CARDS, CollectibleType.COLLECTIBLE_STARTER_DECK, CollectibleType.COLLECTIBLE_BOOSTER_PACK})[pickups[i].SubType] and mod.Data.GlobalData.ItemsCanSpawn["Glitched Deck"] then
                         pickups[i]:Morph(EntityType.ENTITY_PICKUP, PickupVariant.PICKUP_COLLECTIBLE, mod.COLLECTIBLE_GLITCHED_DECK)
                         --mod.Data.GlobalData.ItemsCanSpawn["Glitched Deck"] = true
                     elseif Isaac.GetItemConfig():GetCollectible(pickups[i].SubType).Quality == 0 then
