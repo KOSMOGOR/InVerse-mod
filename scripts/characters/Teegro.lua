@@ -315,7 +315,7 @@ function callbacks:OnChestInit(pickup)
                 })
             end
         elseif rand == 3 then
-            local rand2 = mod.rand(1, 7, rng)
+            local rand2 = mod.rand(3, 7, rng)
             for _ = 1, rand2 do
                 table.insert(spawnPickups, {
                     Variant = HunterKeyPartVariant,
@@ -510,9 +510,9 @@ mod:AddCallback(ModCallbacks.MC_POST_UPDATE, callbacks.CheckRoomReward)
 function callbacks:SpawnKeyAfterBossDeath(npc)
     if not mod.CharaterInGame(mod.PLAYER_TIGRO) then return end
     if npc:IsBoss() and not mod.Data.Teegro.bossWasKilled then
-        if mod.trueTable({RoomType.ROOM_BOSS, RoomType.ROOM_DEVIL, RoomType.ROOM_ANGEL, RoomType.ROOM_MINIBOSS})[Game():GetRoom():GetType()] then
+        if mod.trueTable({RoomType.ROOM_BOSS, RoomType.ROOM_DEVIL, RoomType.ROOM_ANGEL, RoomType.ROOM_MINIBOSS, RoomType.ROOM_SHOP, RoomType.ROOM_CHALLENGE})[Game():GetRoom():GetType()] then
             local spawn = {1, HunterKeyVariant}
-            if Game():GetRoom():GetType() == RoomType.ROOM_MINIBOSS then
+            if mod.trueTable({RoomType.ROOM_MINIBOSS, RoomType.ROOM_SHOP})[Game():GetRoom():GetType()] or Game():GetRoom():GetType() == RoomType.ROOM_CHALLENGE and Game():GetLevel():HasBossChallenge() then
                 spawn = {mod.rand(1, 3, Game():GetRoom():GetAwardSeed()), HunterKeyPartVariant}
             end
             for _ = 1, spawn[1] do
@@ -545,7 +545,8 @@ mod:AddCallback(ModCallbacks.MC_POST_NEW_ROOM, callbacks.ResetTakenDamageOnNewRo
 
 function callbacks:SpawnChestInNewRoom()
     local descriptor = Game():GetLevel():GetCurrentRoomDesc()
-    if mod.trueTable({GridRooms.ROOM_BLACK_MARKET_IDX, GridRooms.ROOM_SECRET_SHOP_IDX})[descriptor.GridIndex] and not mod.Data.Teegro.checkedRooms[descriptor.SafeGridIndex] then
+    if not mod.Data.Teegro.checkedRooms[descriptor.SafeGridIndex] and
+    (mod.trueTable({GridRooms.ROOM_BLACK_MARKET_IDX, GridRooms.ROOM_SECRET_SHOP_IDX})[descriptor.GridIndex] or Game():GetRoom():GetType() == RoomType.ROOM_DEVIL and not descriptor.SurpriseMiniboss) then
         mod.Data.Teegro.checkedRooms[descriptor.SafeGridIndex] = true
         local pos = Game():GetRoom():FindFreePickupSpawnPosition(Game():GetRoom():GetRandomPosition(0), 0, false, false)
         Isaac.Spawn(5, HunterChestVariant, 0, pos, Vector.Zero, nil)
