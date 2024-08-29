@@ -199,6 +199,7 @@ mod:AddCallback(ModCallbacks.MC_POST_PICKUP_UPDATE, callbacks.OnPickupInit)
 
 function callbacks:LockedItemInteraction(pickup, collider, low)
     if collider:ToPlayer() == nil or pickup:GetSprite():GetAnimation() == "Empty" then return end
+    if not collider:ToPlayer():IsItemQueueEmpty() then return end
     local ind = GetPickupInd(pickup)
     if mod.Data.Teegro.lockedItems[ind] and pickup.Child then
         if pickup.Child:GetSprite():GetAnimation() ~= "FrontUnlocking" and mod.Data.Teegro.keyShards >= mod.Data.Teegro.lockedItems[ind].cost then
@@ -215,7 +216,7 @@ function callbacks:LockedItemInteraction(pickup, collider, low)
                 mod.Data.Teegro.lockedItems[ind] = nil
             end
         end
-        return mod.Data.Teegro.lockedItems[ind].touch
+        if mod.Data.Teegro.lockedItems[ind] then return mod.Data.Teegro.lockedItems[ind].touch end
     end
 end
 mod:AddCallback(ModCallbacks.MC_PRE_PICKUP_COLLISION, callbacks.LockedItemInteraction)
@@ -488,8 +489,10 @@ function callbacks:CheckRoomReward()
         end
         if not mod.Data.Teegro.hadDamageThisRoom then
             local r = mod.rand(1, 100, rng)
-            if r <= 47 + 8 then
-                Isaac.Spawn(5, mod._if(r <= 8, HunterChestVariant, HunterKeyPartVariant), 0,
+            local stage = Game():GetLevel():GetStage()
+            local roomChance = mod._if(LevelStage.STAGE4_1 <= stage and stage <= LevelStage.STAGE8, 8, 5)
+            if r <= 47 + roomChance then
+                Isaac.Spawn(5, mod._if(r <= roomChance, HunterChestVariant, HunterKeyPartVariant), 0,
                     room:FindFreePickupSpawnPosition(room:GetCenterPos(), 0), Vector.Zero, nil
                 )
             end
