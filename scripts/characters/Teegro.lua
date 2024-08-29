@@ -370,11 +370,12 @@ function callbacks:SpawnHunterKey(pickup)
     local rng = RNG()
     rng:SetSeed(pickup.InitSeed, 35)
     if pickup.Variant == 30 and pickup.Price == 0 then
-        local upperBound = mod._if(mod.trueTable({RoomType.ROOM_SECRET, RoomType.ROOM_SUPERSECRET, RoomType.ROOM_ULTRASECRET})[Game():GetRoom():GetType()], 250 + 5, 1000)
+        local keyChance = mod._if(mod.CharaterHasBirthright(mod.PLAYER_TIGRO), 20, 5)
+        local upperBound = mod._if(mod.trueTable({RoomType.ROOM_SECRET, RoomType.ROOM_SUPERSECRET, RoomType.ROOM_ULTRASECRET})[Game():GetRoom():GetType()], 250 + keyChance, 1000)
         local r = mod.rand(1, upperBound, rng)
-        if r <= 5 then
+        if r <= keyChance then
             pickup:Morph(5, HunterKeyVariant, 0, true, true)
-        elseif r <= 250 + 5 then
+        elseif r <= 250 + keyChance then
             pickup:Morph(5, HunterKeyPartVariant, 0, true, true)
         end
     elseif pickup.Price ~= 0 then
@@ -465,8 +466,8 @@ function callbacks:CheckRoomReward()
         end
         if not mod.Data.Teegro.hadDamageThisRoom then
             local r = mod.rand(1, 100, rng)
-            if r <= 47 + 5 then
-                Isaac.Spawn(5, mod._if(r <= 5, HunterChestVariant, HunterKeyPartVariant), 0,
+            if r <= 47 + 8 then
+                Isaac.Spawn(5, mod._if(r <= 8, HunterChestVariant, HunterKeyPartVariant), 0,
                     room:FindFreePickupSpawnPosition(room:GetCenterPos(), 0), Vector.Zero, nil
                 )
             end
