@@ -581,6 +581,20 @@ function callbacks:BirthrightEffect()
 end
 mod:AddCallback(ModCallbacks.MC_POST_NEW_LEVEL, callbacks.BirthrightEffect)
 
+function callbacks:OnCouponUse()
+    for _, entity in ipairs(Isaac.GetRoomEntities()) do
+        if entity.Type == 5 then
+            entity = entity:ToPickup()
+            local ind = GetPickupInd(entity)
+            if entity.Price == 0 and mod.Data.Teegro.lockedItems[ind] then
+                mod.Data.Teegro.lockedItems[ind] = nil
+            end
+        end
+    end
+end
+mod:AddCallback(ModCallbacks.MC_USE_ITEM, callbacks.OnCouponUse, CollectibleType.OnCouponUse)
+mod:AddCallback(ModCallbacks.MC_USE_CARD, callbacks.OnCouponUse, Card.CARD_CREDIT)
+
 local GuppyEyeOffsets = {
 	[1] = {Vector(0, 4)},
 	[2] = {Vector(8, 4), Vector(-8, 4)},
