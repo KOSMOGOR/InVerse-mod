@@ -595,6 +595,21 @@ end
 mod:AddCallback(ModCallbacks.MC_USE_ITEM, callbacks.OnCouponUse, CollectibleType.OnCouponUse)
 mod:AddCallback(ModCallbacks.MC_USE_CARD, callbacks.OnCouponUse, Card.CARD_CREDIT)
 
+function callbacks:ChaosCardFunctionality(tear)
+    if tear.Variant ~= TearVariant.CHAOS_CARD then return end
+    local pickups = Isaac.FindByType(EntityType.ENTITY_PICKUP)
+    for _, pickup in ipairs(pickups) do
+        pickup = pickup:ToPickup()
+        local ind = GetPickupInd(pickup)
+        if mod.Data.Teegro.lockedItems[ind] and tear.Position:Distance(pickup.Position) <= 30 and pickup.Child and pickup.Child.Child and not pickup.Child:GetSprite():IsPlaying("FrontUnlocking") then
+            pickup.Child:GetSprite():Play("FrontUnlocking")
+            pickup.Child.Child:GetSprite():Play("BackUnlocking")
+            SFXManager():Play(SoundEffect.SOUND_CHAIN_BREAK)
+        end
+    end
+end
+mod:AddCallback(ModCallbacks.MC_POST_TEAR_UPDATE, callbacks.ChaosCardFunctionality)
+
 local GuppyEyeOffsets = {
 	[1] = {Vector(0, 4)},
 	[2] = {Vector(8, 4), Vector(-8, 4)},
