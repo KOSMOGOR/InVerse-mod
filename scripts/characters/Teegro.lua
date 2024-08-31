@@ -199,10 +199,9 @@ mod:AddCallback(ModCallbacks.MC_POST_PICKUP_UPDATE, callbacks.OnPickupInit)
 
 function callbacks:LockedItemInteraction(pickup, collider, low)
     if collider:ToPlayer() == nil or pickup:GetSprite():GetAnimation() == "Empty" then return end
-    if not collider:ToPlayer():IsItemQueueEmpty() then return end
     local ind = GetPickupInd(pickup)
     if mod.Data.Teegro.lockedItems[ind] and pickup.Child then
-        if pickup.Child:GetSprite():GetAnimation() ~= "FrontUnlocking" and mod.Data.Teegro.keyShards >= mod.Data.Teegro.lockedItems[ind].cost then
+        if not collider:ToPlayer():IsItemQueueEmpty() and pickup.Child:GetSprite():GetAnimation() ~= "FrontUnlocking" and mod.Data.Teegro.keyShards >= mod.Data.Teegro.lockedItems[ind].cost then
             mod.Data.Teegro.keyShards = mod.Data.Teegro.keyShards - mod.Data.Teegro.lockedItems[ind].cost
             if pickup.Child and pickup.Child.Child then
                 pickup.Child:GetSprite():Play("FrontUnlocking")
@@ -509,19 +508,30 @@ mod:AddCallback(ModCallbacks.MC_POST_UPDATE, callbacks.CheckRoomReward)
 
 function callbacks:SpawnKeyAfterBossDeath(npc)
     if not mod.CharaterInGame(mod.PLAYER_TIGRO) then return end
+    local spawn = {}
     if npc:IsBoss() and not mod.Data.Teegro.bossWasKilled then
         if mod.trueTable({RoomType.ROOM_BOSS, RoomType.ROOM_DEVIL, RoomType.ROOM_ANGEL, RoomType.ROOM_MINIBOSS, RoomType.ROOM_SHOP, RoomType.ROOM_CHALLENGE})[Game():GetRoom():GetType()] then
-            local spawn = {1, HunterKeyVariant}
+            spawn = {1, HunterKeyVariant}
             if mod.trueTable({RoomType.ROOM_MINIBOSS, RoomType.ROOM_SHOP})[Game():GetRoom():GetType()] or Game():GetRoom():GetType() == RoomType.ROOM_CHALLENGE and Game():GetLevel():HasBossChallenge() then
                 spawn = {mod.rand(1, 3, Game():GetRoom():GetAwardSeed()), HunterKeyPartVariant}
             end
-            for _ = 1, spawn[1] do
-                local angle = math.rad(mod.rand(0, 359))
-                local vec = Vector(math.cos(angle), math.sin(angle)) * 3
-                Isaac.Spawn(5, spawn[2], 0, npc.Position, vec, nil)
-            end
         end
         mod.Data.Teegro.bossWasKilled = true
+    elseif not npc:IsBoss() and npc:IsChampion() then
+        local chance = mod._if(Game().Difficulty == Difficulty.DIFFICULTY_NORMAL or Game().Difficulty == Difficulty.DIFFICULTY_GREED, 30, 5)
+        for i = 0, Game():GetNumPlayers() - 1 do
+            local player = Isaac.GetPlayer(i)
+            chance = chance + player:GetCollectibleNum(CollectibleType.COLLECTIBLE_CHAMPION_BELT) * 25 + mod._if(player:HasTrinket(TrinketType.TRINKET_PURPLE_HEART), 25, 0)
+        end
+        if mod.rand(1, 100, npc.DropSeed) <= chance then
+            spawn = {1, HunterKeyPartVariant}
+        end
+    end
+    if #spawn == 0 then return end
+    for _ = 1, spawn[1] do
+        local angle = math.rad(mod.rand(0, 359))
+        local vec = Vector(math.cos(angle), math.sin(angle)) * 3
+        Isaac.Spawn(5, spawn[2], 0, npc.Position, vec, nil)
     end
 end
 mod:AddCallback(ModCallbacks.MC_POST_NPC_DEATH, callbacks.SpawnKeyAfterBossDeath)
