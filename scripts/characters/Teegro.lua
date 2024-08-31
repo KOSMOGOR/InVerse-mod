@@ -518,7 +518,7 @@ function callbacks:SpawnKeyAfterBossDeath(npc)
         end
         mod.Data.Teegro.bossWasKilled = true
     elseif not npc:IsBoss() and npc:IsChampion() then
-        local chance = mod._if(Game().Difficulty == Difficulty.DIFFICULTY_NORMAL or Game().Difficulty == Difficulty.DIFFICULTY_GREED, 30, 5)
+        local chance = mod._if(Game().Difficulty == Difficulty.DIFFICULTY_NORMAL or Game().Difficulty == Difficulty.DIFFICULTY_GREED, 30, 10)
         for i = 0, Game():GetNumPlayers() - 1 do
             local player = Isaac.GetPlayer(i)
             chance = chance + player:GetCollectibleNum(CollectibleType.COLLECTIBLE_CHAMPION_BELT) * 25 + mod._if(player:HasTrinket(TrinketType.TRINKET_PURPLE_HEART), 25, 0)
@@ -619,6 +619,25 @@ function callbacks:ChaosCardFunctionality(tear)
     end
 end
 mod:AddCallback(ModCallbacks.MC_POST_TEAR_UPDATE, callbacks.ChaosCardFunctionality)
+
+function callbacks:MagnetoFunctionality(pickup)
+    if not GetHunterKeyValue(pickup) then return end
+    local player = nil
+    local dist = 0
+    for i = 0, Game():GetNumPlayers() - 1 do
+        local pl = Isaac.GetPlayer(i)
+        if pl:HasCollectible(CollectibleType.COLLECTIBLE_MAGNETO) and (not player or pickup.Position:Distance(pl.Position) < dist) then
+            player = pl
+            dist = pickup.Position:Distance(pl.Position)
+        end
+    end
+    if player then
+        local vec = player.Position - pickup.Position
+        pickup.Velocity = vec:Resized(1.7)
+        pickup.GridCollisionClass = EntityGridCollisionClass.GRIDCOLL_WALLS
+    end
+end
+mod:AddCallback(ModCallbacks.MC_POST_PICKUP_UPDATE, callbacks.MagnetoFunctionality)
 
 local GuppyEyeOffsets = {
 	[1] = {Vector(0, 4)},
