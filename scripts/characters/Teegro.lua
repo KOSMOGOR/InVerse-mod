@@ -201,7 +201,7 @@ function callbacks:LockedItemInteraction(pickup, collider, low)
     if collider:ToPlayer() == nil or pickup:GetSprite():GetAnimation() == "Empty" then return end
     local ind = GetPickupInd(pickup)
     if mod.Data.Teegro.lockedItems[ind] and pickup.Child then
-        if not collider:ToPlayer():IsItemQueueEmpty() and pickup.Child:GetSprite():GetAnimation() ~= "FrontUnlocking" and mod.Data.Teegro.keyShards >= mod.Data.Teegro.lockedItems[ind].cost then
+        if collider:ToPlayer():IsItemQueueEmpty() and pickup.Child:GetSprite():GetAnimation() ~= "FrontUnlocking" and mod.Data.Teegro.keyShards >= mod.Data.Teegro.lockedItems[ind].cost then
             mod.Data.Teegro.keyShards = mod.Data.Teegro.keyShards - mod.Data.Teegro.lockedItems[ind].cost
             if pickup.Child and pickup.Child.Child then
                 pickup.Child:GetSprite():Play("FrontUnlocking")
@@ -576,14 +576,16 @@ function callbacks:BirthrightEffect()
         rng:SetSeed(Game():GetRoom():GetAwardSeed(), 35)
         for i = 1, 4 do
             local pos = Vector(200 + mod._if(i % 2 == 0, 240, 0), 200 + mod._if(i > 2, 160, 0))
-            local item = GetRandomItem(0, Game():GetRoom():GetAwardSeed())
+            local item = GetRandomItem(0, nil, Game():GetRoom():GetAwardSeed())
             local pickup = Isaac.Spawn(5, 100, item, pos, Vector.Zero, nil):ToPickup()
             local ind = GetPickupInd(pickup)
             mod.Data.Teegro.itemsDeleteOnNewRoom[ind] = true
-            mod.Data.Teegro.checkedItems[ind] = true
+            mod.Data.Teegro.checkedItems[ind] = item
             mod.Data.Teegro.lockedItems[ind] = {
                 cost = mod.rand(2, 3, rng) * 4,
-                touch = true
+                touch = true,
+                Variant = 100,
+                SubType = item
             }
             LockItemSprite(pickup, true)
         end
