@@ -600,8 +600,8 @@ mod:AddCallback(ModCallbacks.MC_POST_NEW_ROOM, callbacks.ResetTakenDamageOnNewRo
 
 function callbacks:SpawnChestInNewRoom()
     local descriptor = Game():GetLevel():GetCurrentRoomDesc()
-    if not mod.Data.Teegro.checkedRooms[descriptor.SafeGridIndex] and
-    mod.trueTable({GridRooms.ROOM_BLACK_MARKET_IDX, GridRooms.ROOM_SECRET_SHOP_IDX})[descriptor.GridIndex] then
+    if mod.Data.Teegro.checkedRooms[descriptor.SafeGridIndex] then return end
+    if mod.trueTable({GridRooms.ROOM_BLACK_MARKET_IDX, GridRooms.ROOM_SECRET_SHOP_IDX})[descriptor.GridIndex] then
         local pos = Game():GetRoom():FindFreePickupSpawnPosition(Game():GetRoom():GetRandomPosition(0), 0, false, false)
         Isaac.Spawn(5, HunterChestVariant, 0, pos, Vector.Zero, nil)
     elseif Game():GetRoom():GetType() == RoomType.ROOM_DEVIL and not descriptor.SurpriseMiniboss then
@@ -671,13 +671,13 @@ function callbacks:OnCouponUse()
         if entity.Type == 5 then
             entity = entity:ToPickup()
             local ind = GetPickupInd(entity)
-            if entity.Price == 0 and mod.Data.Teegro.lockedItems[ind] then
+            if entity.Price == 0 and mod.Data.Teegro.lockedItems[ind] and mod.Data.Teegro.lockedItems[ind].touch then
                 mod.Data.Teegro.lockedItems[ind] = nil
             end
         end
     end
 end
-mod:AddCallback(ModCallbacks.MC_USE_ITEM, callbacks.OnCouponUse, CollectibleType.OnCouponUse)
+mod:AddCallback(ModCallbacks.MC_USE_ITEM, callbacks.OnCouponUse, CollectibleType.COLLECTIBLE_COUPON)
 mod:AddCallback(ModCallbacks.MC_USE_CARD, callbacks.OnCouponUse, Card.CARD_CREDIT)
 
 function callbacks:ChaosCardFunctionality(tear)
