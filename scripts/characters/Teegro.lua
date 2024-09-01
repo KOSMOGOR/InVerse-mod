@@ -605,11 +605,13 @@ function callbacks:SpawnChestInNewRoom()
         local pos = Game():GetRoom():FindFreePickupSpawnPosition(Game():GetRoom():GetRandomPosition(0), 0, false, false)
         Isaac.Spawn(5, HunterChestVariant, 0, pos, Vector.Zero, nil)
     elseif Game():GetRoom():GetType() == RoomType.ROOM_DEVIL and not descriptor.SurpriseMiniboss then
-        local pos1 = Game():GetRoom():FindFreePickupSpawnPosition(Vector(280, 240), 0, true, true)
+        local pos1 = Game():GetRoom():FindFreePickupSpawnPosition(Vector(240, 240), 0, true, true)
         local ent1 = Isaac.Spawn(5, HunterKeyVariant, 0, pos1, Vector.Zero, nil):ToPickup()
+        ent1.AutoUpdatePrice = false
         ent1.Price = -5
-        local pos2 = Game():GetRoom():FindFreePickupSpawnPosition(Vector(360, 240), 0, true, true)
+        local pos2 = Game():GetRoom():FindFreePickupSpawnPosition(Vector(400, 240), 0, true, true)
         local ent2 = Isaac.Spawn(5, HunterChestVariant, 0, pos2, Vector.Zero, nil):ToPickup()
+        ent2.AutoUpdatePrice = false
         ent2.Price = -5
     elseif Game():GetRoom():GetType() == RoomType.ROOM_ANGEL then
         local pos = Game():GetRoom():GetCenterPos()
