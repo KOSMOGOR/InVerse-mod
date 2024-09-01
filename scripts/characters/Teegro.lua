@@ -161,16 +161,6 @@ function callbacks:OnPickupInit(pickup)
     if Game():GetLevel():GetCurrentRoomDesc().GridIndex == GridRooms.ROOM_GENESIS_IDX then return end
     if Game():GetLevel():GetCurrentRoomDesc().Data.StageID == 35 then return end -- Death certificate rooms (originally Home rooms)
     local ind = GetPickupInd(pickup)
-    if pickup.Variant == PickupVariant.PICKUP_COIN and not mod.Data.Teegro.checkedItems[ind] then
-        if Isaac.GetPlayer(0):GetNumCoins() >= 30 and mod.rand(1, 10, pickup.InitSeed) == 1 then
-            pickup:Morph(5, HunterKeyPartVariant, 0, true, false)
-        else
-            mod.Data.Teegro.checkedItems[ind] = {
-                Variant = pickup.Variant,
-                SubType = pickup.SubType
-            }
-        end
-    end
     if mod.Data.Teegro.checkedItems[ind] and pickup.Variant == 100 and (mod.Data.Teegro.checkedItems[ind].SubType ~= pickup.SubType or mod.Data.Teegro.checkedItems[ind].Variant ~= 100) then
         mod.Data.Teegro.checkedItems[ind] = nil
     end
@@ -429,7 +419,11 @@ function callbacks:SpawnHunterKey(pickup)
     if mod.Data.Teegro.checkedItems[ind] then return end
     local rng = RNG()
     rng:SetSeed(pickup.InitSeed, 35)
-    if pickup.Variant == 30 and pickup.Price == 0 then
+    if pickup.Variant == PickupVariant.PICKUP_COIN and not mod.Data.Teegro.checkedItems[ind] then
+        if Isaac.GetPlayer(0):GetNumCoins() >= 30 and mod.rand(1, 10, pickup.InitSeed) == 1 then
+            pickup:Morph(5, HunterKeyPartVariant, 0, true, false)
+        end
+    elseif pickup.Variant == 30 and pickup.Price == 0 then
         local keyChance = mod._if(mod.CharaterHasBirthright(mod.PLAYER_TIGRO), 20, 5)
         local upperBound = mod._if(mod.trueTable({RoomType.ROOM_SECRET, RoomType.ROOM_SUPERSECRET, RoomType.ROOM_ULTRASECRET})[Game():GetRoom():GetType()], 250 + keyChance, 1000)
         local r = mod.rand(1, upperBound, rng)
@@ -438,7 +432,7 @@ function callbacks:SpawnHunterKey(pickup)
         elseif r <= 250 + keyChance then
             pickup:Morph(5, HunterKeyPartVariant, 0, true, true)
         end
-    elseif pickup.Price ~= 0 then
+    elseif pickup.Price ~= 0 and not GetHunterKeyValue(pickup) then
         local pound = mod.CharaterHasItem(CollectibleType.COLLECTIBLE_POUND_OF_FLESH)
         local r = mod.rand(1, 100, rng)
         if r <= 2 then
@@ -607,13 +601,36 @@ mod:AddCallback(ModCallbacks.MC_POST_NEW_ROOM, callbacks.ResetTakenDamageOnNewRo
 function callbacks:SpawnChestInNewRoom()
     local descriptor = Game():GetLevel():GetCurrentRoomDesc()
     if not mod.Data.Teegro.checkedRooms[descriptor.SafeGridIndex] and
-    (mod.trueTable({GridRooms.ROOM_BLACK_MARKET_IDX, GridRooms.ROOM_SECRET_SHOP_IDX})[descriptor.GridIndex] or Game():GetRoom():GetType() == RoomType.ROOM_DEVIL and not descriptor.SurpriseMiniboss) then
-        mod.Data.Teegro.checkedRooms[descriptor.SafeGridIndex] = true
+    mod.trueTable({GridRooms.ROOM_BLACK_MARKET_IDX, GridRooms.ROOM_SECRET_SHOP_IDX})[descriptor.GridIndex] then
         local pos = Game():GetRoom():FindFreePickupSpawnPosition(Game():GetRoom():GetRandomPosition(0), 0, false, false)
         Isaac.Spawn(5, HunterChestVariant, 0, pos, Vector.Zero, nil)
+    elseif Game():GetRoom():GetType() == RoomType.ROOM_DEVIL and not descriptor.SurpriseMiniboss then
+        local pos1 = Game():GetRoom():FindFreePickupSpawnPosition(Vector(280, 240), 0, true, true)
+        local ent1 = Isaac.Spawn(5, HunterKeyVariant, 0, pos1, Vector.Zero, nil):ToPickup()
+        ent1.Price = -5
+        local pos2 = Game():GetRoom():FindFreePickupSpawnPosition(Vector(360, 240), 0, true, true)
+        local ent2 = Isaac.Spawn(5, HunterChestVariant, 0, pos2, Vector.Zero, nil):ToPickup()
+        ent2.Price = -5
+    elseif Game():GetRoom():GetType() == RoomType.ROOM_ANGEL then
+        local pos = Game():GetRoom():GetCenterPos()
+        pos.X = pos.X + mod.rand(-1, 1, Game():GetRoom():GetAwardSeed()) * 40
+        pos.Y = pos.Y + mod.rand(-1, 1, Game():GetRoom():GetAwardSeed()) * 40
+        pos = Game():GetRoom():FindFreePickupSpawnPosition(pos, 0, true, true)
+        local ent = Isaac.Spawn(5, HunterKeyVariant, 0, pos, Vector.Zero, nil):ToPickup()
+        ent.AutoUpdatePrice = false
+        ent.Price = 15
     end
+    mod.Data.Teegro.checkedRooms[descriptor.SafeGridIndex] = true
 end
 mod:AddCallback(ModCallbacks.MC_POST_NEW_ROOM, callbacks.SpawnChestInNewRoom)
+
+function callbacks:AddDevilDeal(pickup, collider, low)
+    if collider:ToPlayer() == nil then return end
+    if Game():GetRoom():GetType() == RoomType.ROOM_DEVIL and (GetHunterKeyValue(pickup) or pickup.Variant == HunterChestVariant) and pickup.Price == -5 then
+        Game():AddDevilRoomDeal()
+    end
+end
+mod:AddCallback(ModCallbacks.MC_PRE_PICKUP_COLLISION, callbacks.AddDevilDeal)
 
 function callbacks:ResetCheckedRoom()
     mod.Data.Teegro.checkedRooms = {}
