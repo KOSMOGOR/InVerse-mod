@@ -555,9 +555,9 @@ function callbacks:SpawnKeyAfterBossDeath(npc)
     if not mod.CharaterInGame(mod.PLAYER_TIGRO) then return end
     local spawn = {}
     if npc:IsBoss() and not mod.Data.Teegro.bossWasKilled then
-        if mod.trueTable({RoomType.ROOM_BOSS, RoomType.ROOM_DEVIL, RoomType.ROOM_ANGEL, RoomType.ROOM_MINIBOSS, RoomType.ROOM_SHOP, RoomType.ROOM_CHALLENGE})[Game():GetRoom():GetType()] then
+        if mod.trueTable({RoomType.ROOM_BOSS, RoomType.ROOM_DEVIL, RoomType.ROOM_ANGEL, RoomType.ROOM_MINIBOSS, RoomType.ROOM_SHOP, RoomType.ROOM_CHALLENGE, RoomType.ROOM_SECRET, RoomType.ROOM_SUPERSECRET})[Game():GetRoom():GetType()] then
             spawn = {1, HunterKeyVariant}
-            if mod.trueTable({RoomType.ROOM_MINIBOSS, RoomType.ROOM_SHOP})[Game():GetRoom():GetType()] or Game():GetRoom():GetType() == RoomType.ROOM_CHALLENGE and Game():GetLevel():HasBossChallenge() then
+            if mod.trueTable({RoomType.ROOM_MINIBOSS, RoomType.ROOM_SHOP, RoomType.ROOM_SECRET, RoomType.ROOM_SUPERSECRET})[Game():GetRoom():GetType()] or Game():GetRoom():GetType() == RoomType.ROOM_CHALLENGE and Game():GetLevel():HasBossChallenge() then
                 spawn = {mod.rand(1, 3, Game():GetRoom():GetAwardSeed()), HunterKeyPartVariant}
             end
         end
