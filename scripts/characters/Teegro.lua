@@ -79,6 +79,15 @@ local function GetHunterKeyValue(pickup)
     })[pickup.Variant]
 end
 
+local function GetHunterKeyAnm(pickup)
+    return ({
+        [HunterKeyVariant] = "gfx/items/pickups/hunter_key.anm2",
+        [HunterKeyPartVariant] = "gfx/items/pickups/hunter_key_part.anm2",
+        [DoubleHunterKeyVariant] = "gfx/items/pickups/hunter_key_double.anm2",
+        [HalfHunterKeyVariant] = "gfx/items/pickups/hunter_key_part.anm2",
+    })[pickup.Variant]
+end
+
 mod.Characters[mod.PLAYER_TIGRO] = {
     Hair = Isaac.GetCostumeIdByPath("gfx/characters/teegro_hair.anm2"),
     Tail = Isaac.GetCostumeIdByPath("gfx/characters/teegro_tail.anm2"),
@@ -156,10 +165,13 @@ function callbacks:OnPickupInit(pickup)
         if Isaac.GetPlayer(0):GetNumCoins() >= 30 and mod.rand(1, 10, pickup.InitSeed) == 1 then
             pickup:Morph(5, HunterKeyPartVariant, 0, true, false)
         else
-            mod.Data.Teegro.checkedItems[ind] = true
+            mod.Data.Teegro.checkedItems[ind] = {
+                Variant = pickup.Variant,
+                SubType = pickup.SubType
+            }
         end
     end
-    if mod.Data.Teegro.checkedItems[ind] and pickup.Variant == 100 and mod.Data.Teegro.checkedItems[ind] ~= pickup.SubType then
+    if mod.Data.Teegro.checkedItems[ind] and pickup.Variant == 100 and (mod.Data.Teegro.checkedItems[ind].SubType ~= pickup.SubType or mod.Data.Teegro.checkedItems[ind].Variant ~= 100) then
         mod.Data.Teegro.checkedItems[ind] = nil
     end
     if mod.Data.Teegro.lockedItems[ind] and mod.Data.Teegro.lockedItems[ind].Variant == 100 and pickup.Variant ~= 100 then
@@ -168,8 +180,11 @@ function callbacks:OnPickupInit(pickup)
     if mod.Data.Teegro.lockedItems[ind] and not pickup.Child then
         LockItemSprite(pickup, mod.Data.Teegro.lockedItems[ind].touch)
     end
-    if pickup.Variant == 100 and not mod.Data.Teegro.checkedItems[ind]  and pickup:GetSprite():GetAnimation() ~= "Empty"then
-        mod.Data.Teegro.checkedItems[ind] = pickup.SubType
+    if pickup.Variant == 100 and not mod.Data.Teegro.checkedItems[ind] and pickup:GetSprite():GetAnimation() ~= "Empty"then
+        mod.Data.Teegro.checkedItems[ind] = {
+            Variant = pickup.Variant,
+            SubType = pickup.SubType
+        }
         if Isaac.GetItemConfig():GetCollectible(pickup.SubType):HasTags(ItemConfig.TAG_QUEST) or Game():GetRoom():GetType() == RoomType.ROOM_BOSS then return end
         local cost = 4
         local touch = false
@@ -198,10 +213,12 @@ end
 mod:AddCallback(ModCallbacks.MC_POST_PICKUP_UPDATE, callbacks.OnPickupInit)
 
 function callbacks:LockedItemInteraction(pickup, collider, low)
-    if collider:ToPlayer() == nil or pickup:GetSprite():GetAnimation() == "Empty" then return end
+    local player = collider:ToPlayer()
+    if player == nil or pickup:GetSprite():GetAnimation() == "Empty" then return end
     local ind = GetPickupInd(pickup)
     if mod.Data.Teegro.lockedItems[ind] and pickup.Child then
-        if collider:ToPlayer():IsItemQueueEmpty() and pickup.Child:GetSprite():GetAnimation() ~= "FrontUnlocking" and mod.Data.Teegro.keyShards >= mod.Data.Teegro.lockedItems[ind].cost then
+        local canPickup = player:CanPickupItem() and player:IsItemQueueEmpty() and string.lower(player:GetSprite():GetAnimation()):find("pickup", 1) == nil
+        if canPickup and pickup.Child:GetSprite():GetAnimation() ~= "FrontUnlocking" and mod.Data.Teegro.keyShards >= mod.Data.Teegro.lockedItems[ind].cost then
             mod.Data.Teegro.keyShards = mod.Data.Teegro.keyShards - mod.Data.Teegro.lockedItems[ind].cost
             if pickup.Child and pickup.Child.Child then
                 pickup.Child:GetSprite():Play("FrontUnlocking")
@@ -237,11 +254,24 @@ end
 mod:AddCallback(ModCallbacks.MC_POST_PICKUP_UPDATE, callbacks.UnlockItem)
 
 function callbacks:GrabHunterKey(pickup, collider, low)
-    if collider:ToPlayer() == nil then return end
+    local player = collider:ToPlayer()
+    if player == nil then return end
     local value = GetHunterKeyValue(pickup)
     if value then
-        if pickup:GetSprite():IsPlaying("Collect") then return true end
-        pickup:GetSprite():Play("Collect")
+        if pickup.Price ~= 0 then
+            if pickup.Price == -1000 then pickup.Price = 0 end
+            if pickup.Price > 0 then
+                if player:GetNumCoins() < pickup.Price then return true end
+                player:AddCoins(-pickup.Price)
+            elseif pickup.Price == -5 then
+                player:TakeDamage(2, (1<<7) | (1<<13) | (1<<28), EntityRef(player), 30)
+            end
+            player:AnimatePickup(pickup:GetSprite(), true)
+            pickup:Remove()
+        else
+            if pickup:GetSprite():IsPlaying("Collect") then return true end
+            pickup:GetSprite():Play("Collect")
+        end
         local keys1 = mod.Data.Teegro.keyShards // 4
         mod.Data.Teegro.keyShards = mod.Data.Teegro.keyShards + value
         local keys2 = mod.Data.Teegro.keyShards // 4
@@ -258,7 +288,10 @@ function callbacks:OnChestInit(pickup)
     if pickup.Variant ~= HunterChestVariant then return end
     local ind = GetPickupInd(pickup)
     if not mod.Data.Teegro.checkedItems[ind] then
-        mod.Data.Teegro.checkedItems[ind] = true
+        mod.Data.Teegro.checkedItems[ind] = {
+            Variant = pickup.Variant,
+            SubType = pickup.SubType
+        }
         local rng = RNG()
         rng:SetSeed(pickup.InitSeed, 35)
         local spawnPickups = {}
@@ -353,7 +386,10 @@ function callbacks:OpenHunterChest(pickup, collider, low)
             local pos = pickup.Position
             local pickup2 = Isaac.Spawn(5, 100, drop[1].SubType, pos, Vector.Zero, nil)
             local ind2 = GetPickupInd(pickup2)
-            mod.Data.Teegro.checkedItems[ind2] = pickup2.SubType
+            mod.Data.Teegro.checkedItems[ind2] = {
+                Variant = 100,
+                SubType = pickup2.SubType
+            }
             pickup2:GetSprite():ReplaceSpritesheet(5, "gfx/teegro/Hunter_Chest_item.png")
             pickup2:GetSprite():LoadGraphics()
             pickup2:GetSprite():SetOverlayFrame("Alternates", 10)
@@ -387,8 +423,10 @@ mod:AddCallback(ModCallbacks.MC_POST_PICKUP_UPDATE, callbacks.HunterChestUpdate)
 function callbacks:SpawnHunterKey(pickup)
     if not mod.CharaterInGame(mod.PLAYER_TIGRO) or pickup.Variant == 100 then return end
     local ind = GetPickupInd(pickup)
+    if mod.Data.Teegro.checkedItems[ind] and mod.Data.Teegro.checkedItems[ind].Variant ~= pickup.Variant then
+        mod.Data.Teegro.checkedItems[ind] = nil
+    end
     if mod.Data.Teegro.checkedItems[ind] then return end
-    mod.Data.Teegro.checkedItems[ind] = true
     local rng = RNG()
     rng:SetSeed(pickup.InitSeed, 35)
     if pickup.Variant == 30 and pickup.Price == 0 then
@@ -401,15 +439,18 @@ function callbacks:SpawnHunterKey(pickup)
             pickup:Morph(5, HunterKeyPartVariant, 0, true, true)
         end
     elseif pickup.Price ~= 0 then
+        local pound = mod.CharaterHasItem(CollectibleType.COLLECTIBLE_POUND_OF_FLESH)
         local r = mod.rand(1, 100, rng)
         if r <= 2 then
-            pickup:Morph(5, HunterKeyVariant, 0, true, true)
+            pickup.Variant = HunterKeyVariant
+            pickup.SubType = 0
             pickup.AutoUpdatePrice = false
-            pickup.Price = 15
+            pickup.Price = mod._if(pound, -5, 15)
         elseif r <= 25 + 2 then
-            pickup:Morph(5, HunterKeyPartVariant, 0, true, true)
+            pickup.Variant = HunterKeyPartVariant
+            pickup.SubType = 0
             pickup.AutoUpdatePrice = false
-            pickup.Price = 5
+            pickup.Price = mod._if(pound, -5, 5)
         end
     end
     local playerWithEquality = mod.CharaterHasTrinket(TrinketType.TRINKET_EQUALITY)
@@ -422,12 +463,22 @@ function callbacks:SpawnHunterKey(pickup)
             pickup:Morph(5, HalfHunterKeyVariant, 0, true, true)
         end
     end
+    local anm2 = GetHunterKeyAnm(pickup)
+    if anm2 and pickup:GetSprite():GetFilename() ~= anm2 then
+        pickup:GetSprite():Load(anm2, true)
+        pickup:GetSprite():Play("Idle")
+    end
     if GetHunterKeyValue(pickup) == 1 then
         pickup:GetSprite():ReplaceSpritesheet(0, "gfx/items/pickups/pickup_hunter_key_part_" .. mod.rand(1, 4) .. ".png")
     elseif GetHunterKeyValue(pickup) == 2 then
         pickup:GetSprite():ReplaceSpritesheet(0, "gfx/items/pickups/pickup_hunter_key_part_double_" .. mod.rand(1, 2) .. ".png")
     end
     pickup:GetSprite():LoadGraphics()
+    ind = GetPickupInd(pickup)
+    mod.Data.Teegro.checkedItems[ind] = {
+        Variant = pickup.Variant,
+        SubType = pickup.SubType
+    }
 end
 mod:AddCallback(ModCallbacks.MC_POST_PICKUP_UPDATE, callbacks.SpawnHunterKey)
 
@@ -580,7 +631,10 @@ function callbacks:BirthrightEffect()
             local pickup = Isaac.Spawn(5, 100, item, pos, Vector.Zero, nil):ToPickup()
             local ind = GetPickupInd(pickup)
             mod.Data.Teegro.itemsDeleteOnNewRoom[ind] = true
-            mod.Data.Teegro.checkedItems[ind] = item
+            mod.Data.Teegro.checkedItems[ind] = {
+                Variant = 100,
+                SubType = item
+            }
             mod.Data.Teegro.lockedItems[ind] = {
                 cost = mod.rand(2, 3, rng) * 4,
                 touch = true,
