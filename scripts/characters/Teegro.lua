@@ -161,6 +161,7 @@ function callbacks:OnPickupInit(pickup)
     if Game():GetLevel():GetCurrentRoomDesc().GridIndex == GridRooms.ROOM_GENESIS_IDX then return end
     if Game():GetLevel():GetCurrentRoomDesc().Data.StageID == 35 then return end -- Death certificate rooms (originally Home rooms)
     local ind = GetPickupInd(pickup)
+    if pickup.Variant == 100 and mod.CharaterHasTrinket(TrinketType.TRINKET_STORE_CREDIT) then return end
     if mod.Data.Teegro.checkedItems[ind] and pickup.Variant == 100 and (mod.Data.Teegro.checkedItems[ind].SubType ~= pickup.SubType or mod.Data.Teegro.checkedItems[ind].Variant ~= 100) then
         mod.Data.Teegro.checkedItems[ind] = nil
     end
