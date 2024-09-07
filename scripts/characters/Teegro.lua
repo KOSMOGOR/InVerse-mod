@@ -256,6 +256,7 @@ function callbacks:GrabHunterKey(pickup, collider, low)
                 player:AddCoins(-pickup.Price)
             elseif pickup.Price == -5 then
                 player:TakeDamage(2, (1<<7) | (1<<13) | (1<<28), EntityRef(player), 30)
+                if Game():GetRoom():GetType() == RoomType.ROOM_DEVIL then Game():AddDevilRoomDeal() end
             end
             player:AnimatePickup(pickup:GetSprite(), true)
             pickup:Remove()
@@ -365,14 +366,19 @@ function callbacks:OpenHunterChest(pickup, collider, low)
         SFXManager():Play(SoundEffect.SOUND_CHEST_OPEN)
         local ind = GetPickupInd(pickup)
         local drop = mod.Data.Teegro.chestDrops[ind]
+        if Game():GetRoom():GetType() == RoomType.ROOM_DEVIL and pickup.Price == -5 then
+            Game():AddDevilRoomDeal()
+        end
         if drop[1].Variant ~= 100 then
             for _, pickup1 in ipairs(drop) do
                 local angle = math.rad(mod.rand(0, 359))
                 local vec = Vector(math.cos(angle), math.sin(angle)) * 3
                 Isaac.Spawn(5, pickup1.Variant, pickup1.SubType, pickup.Position, vec, nil)
             end
-            pickup:GetSprite():Play("Open")
-            mod.Data.Teegro.itemsDeleteOnNewRoom[GetPickupInd(pickup)] = true
+            local pickup2 = Isaac.Spawn(5, HunterChestVariant, 0, pickup.Position, pickup.Velocity, nil)
+            pickup2:GetSprite():Play("Open")
+            pickup:Remove()
+            mod.Data.Teegro.itemsDeleteOnNewRoom[GetPickupInd(pickup2)] = true
         else
             local pos = pickup.Position
             local pickup2 = Isaac.Spawn(5, 100, drop[1].SubType, pos, Vector.Zero, nil)
@@ -384,7 +390,7 @@ function callbacks:OpenHunterChest(pickup, collider, low)
             pickup2:GetSprite():ReplaceSpritesheet(5, "gfx/teegro/Hunter_Chest_item.png")
             pickup2:GetSprite():LoadGraphics()
             pickup2:GetSprite():SetOverlayFrame("Alternates", 10)
-            for i = 1, 4 do pickup2:Update() end
+            for _ = 1, 4 do pickup2:Update() end
             pickup:Remove()
         end
     end
