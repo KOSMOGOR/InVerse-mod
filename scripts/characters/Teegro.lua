@@ -22,7 +22,8 @@ function callbacks:SetDefaultValues(player) -- Set Defaul Values
             lastRoomCheckClear = 0,
             bossWasKilled = false,
             checkedRooms = {},
-            chestDrops = {}
+            chestDrops = {},
+            restock = {}
         }
     end
 end
@@ -79,13 +80,54 @@ local function GetHunterKeyValue(pickup)
     })[pickup.Variant]
 end
 
-local function GetHunterKeyAnm(pickup)
-    return ({
-        [HunterKeyVariant] = "gfx/items/pickups/hunter_key.anm2",
-        [HunterKeyPartVariant] = "gfx/items/pickups/hunter_key_part.anm2",
-        [DoubleHunterKeyVariant] = "gfx/items/pickups/hunter_key_double.anm2",
-        [HalfHunterKeyVariant] = "gfx/items/pickups/hunter_key_part.anm2",
-    })[pickup.Variant]
+local function GetSalePrice(price)
+    for i = 0, Game():GetNumPlayers() - 1 do
+        local player = Isaac.GetPlayer(i)
+        for _ = 1, player:GetCollectibleNum(CollectibleType.COLLECTIBLE_STEAM_SALE) do
+            price = price // 2
+        end
+    end
+    return mod._if(price == 0, 1, price)
+end
+
+local function GetDimension()
+	local level = Game():GetLevel()
+	local ind = level:GetCurrentRoomIndex()
+	for i = 0, 2 do
+		if GetPtrHash(level:GetRoomByIdx(ind, i)) == GetPtrHash(level:GetRoomByIdx(ind, -1)) then
+			return i
+		end
+	end
+end
+
+local function AddRestockInfo(pickup)
+    if mod.CharaterHasItem(CollectibleType.COLLECTIBLE_RESTOCK) then
+        local roomId = Game():GetLevel():GetCurrentRoomDesc().SafeGridIndex.. "." ..GetDimension()
+        if not mod.Data.Teegro.restock[roomId] then mod.Data.Teegro.restock[roomId] = {} end
+        if mod.Data.Teegro.restock[roomId][pickup.ShopItemId] then
+            mod.Data.Teegro.restock[roomId][pickup.ShopItemId] = {
+                time = 30,
+                variant = pickup.Variant,
+                subtype = pickup.SubType,
+                pos = pickup.Position,
+                basePrice = mod.Data.Teegro.restock[roomId][pickup.ShopItemId].basePrice,
+                incr = mod.Data.Teegro.restock[roomId][pickup.ShopItemId].incr + mod.Data.Teegro.restock[roomId][pickup.ShopItemId].incr1,
+                incr1 = mod.Data.Teegro.restock[roomId][pickup.ShopItemId].incr1 + 1
+            }
+        else
+            local basePrice = 5
+            if GetHunterKeyValue(pickup) and GetHunterKeyValue(pickup) >= 4 then basePrice = 15 end
+            mod.Data.Teegro.restock[roomId][pickup.ShopItemId] = {
+                time = 30,
+                variant = pickup.Variant,
+                subtype = pickup.SubType,
+                pos = pickup.Position,
+                basePrice = basePrice,
+                incr = 1,
+                incr1 = 1
+            }
+        end
+    end
 end
 
 mod.Characters[mod.PLAYER_TIGRO] = {
@@ -259,6 +301,7 @@ function callbacks:GrabHunterKey(pickup, collider, low)
                 if Game():GetRoom():GetType() == RoomType.ROOM_DEVIL then Game():AddDevilRoomDeal() end
             end
             player:AnimatePickup(pickup:GetSprite(), true)
+            AddRestockInfo(pickup)
             pickup:Remove()
         else
             if pickup:GetSprite():IsPlaying("Collect") then return true end
@@ -442,16 +485,22 @@ function callbacks:SpawnHunterKey(pickup)
     elseif pickup.Price ~= 0 and not GetHunterKeyValue(pickup) then
         local pound = mod.CharaterHasItem(CollectibleType.COLLECTIBLE_POUND_OF_FLESH)
         local r = mod.rand(1, 100, rng)
+        local variant = pickup.Variant
+        local price = 0
         if r <= 2 then
-            pickup.Variant = HunterKeyVariant
-            pickup.SubType = 0
-            pickup.AutoUpdatePrice = false
-            pickup.Price = mod._if(pound, -5, 15)
+            variant = HunterKeyVariant
+            price = 15
         elseif r <= 25 + 2 then
-            pickup.Variant = HunterKeyPartVariant
-            pickup.SubType = 0
+            variant = HunterKeyPartVariant
+            price = 5
+        end
+        if variant ~= pickup.Variant then
+            pickup.Price = 0
+            pickup:Morph(5, variant, 0, true, true)
+            pickup:Update()
             pickup.AutoUpdatePrice = false
-            pickup.Price = mod._if(pound, -5, 5)
+            price = GetSalePrice(price)
+            pickup.Price = mod._if(pound, -5, price)
         end
     end
     local playerWithEquality = mod.CharaterHasTrinket(TrinketType.TRINKET_EQUALITY)
@@ -463,11 +512,6 @@ function callbacks:SpawnHunterKey(pickup)
         elseif pickup.Variant == HunterKeyPartVariant then
             pickup:Morph(5, HalfHunterKeyVariant, 0, true, true)
         end
-    end
-    local anm2 = GetHunterKeyAnm(pickup)
-    if anm2 and pickup:GetSprite():GetFilename() ~= anm2 then
-        pickup:GetSprite():Load(anm2, true)
-        pickup:GetSprite():Play("Idle")
     end
     if GetHunterKeyValue(pickup) == 1 then
         pickup:GetSprite():ReplaceSpritesheet(0, "gfx/items/pickups/pickup_hunter_key_part_" .. mod.rand(1, 4) .. ".png")
@@ -720,6 +764,25 @@ function callbacks:MagnetoFunctionality(pickup)
     end
 end
 mod:AddCallback(ModCallbacks.MC_POST_PICKUP_UPDATE, callbacks.MagnetoFunctionality)
+
+function callbacks:RestockFunctionality()
+    if not mod.Data.Teegro.restock then return end
+    local roomId = Game():GetLevel():GetCurrentRoomDesc().SafeGridIndex.. "." ..GetDimension()
+    if not mod.Data.Teegro.restock[roomId] then return end
+    for shopId, info in pairs(mod.Data.Teegro.restock[roomId]) do
+        if info.time > 0 then
+            mod.Data.Teegro.restock[roomId][shopId].time = info.time - 1
+        elseif info.time == 0 then
+            mod.Data.Teegro.restock[roomId][shopId].time = -1
+            local pickup = Isaac.Spawn(5, info.variant, info.subtype, info.pos, Vector.Zero, nil):ToPickup()
+            pickup.AutoUpdatePrice = false
+            pickup.Price = GetSalePrice(info.basePrice) + info.incr
+            pickup.ShopItemId = shopId
+            Isaac.Spawn(1000, EffectVariant.POOF01, 0, info.pos, Vector.Zero, nil)
+        end
+    end
+end
+mod:AddCallback(ModCallbacks.MC_POST_UPDATE, callbacks.RestockFunctionality)
 
 local GuppyEyeOffsets = {
 	[1] = {Vector(0, 4)},
