@@ -201,7 +201,7 @@ mod:AddCallback(ModCallbacks.MC_POST_EFFECT_UPDATE, callbacks.UpdateChainsAndPri
 function callbacks:OnPickupInit(pickup)
     if not mod.CharaterInGame(mod.PLAYER_TIGRO) then return end
     if Game():GetLevel():GetCurrentRoomDesc().GridIndex == GridRooms.ROOM_GENESIS_IDX then return end
-    if Game():GetLevel():GetCurrentRoomDesc().Data.StageID == 35 then return end -- Death certificate rooms (originally Home rooms)
+    if GetDimension() == 2 then return end
     local ind = GetPickupInd(pickup)
     if pickup.Variant == 100 and mod.CharaterHasTrinket(TrinketType.TRINKET_STORE_CREDIT) then return end
     if mod.Data.Teegro.checkedItems[ind] and pickup.Variant == 100 and (mod.Data.Teegro.checkedItems[ind].SubType ~= pickup.SubType or mod.Data.Teegro.checkedItems[ind].Variant ~= 100) then
@@ -291,6 +291,7 @@ function callbacks:GrabHunterKey(pickup, collider, low)
     if player == nil then return end
     local value = GetHunterKeyValue(pickup)
     if value then
+        local opt = pickup.OptionsPickupIndex
         if pickup.Price ~= 0 then
             if pickup.Price == -1000 then pickup.Price = 0 end
             if pickup.Price > 0 then
@@ -314,6 +315,12 @@ function callbacks:GrabHunterKey(pickup, collider, low)
             mod._if(keys2 > keys1, SoundEffect.SOUND_DEATH_BURST_BONE, SoundEffect.SOUND_BONE_HEART)
         )
         RenderSincePickup = 0
+        for _, entity in ipairs(Isaac.GetRoomEntities()) do
+            if entity:ToPickup() and entity:ToPickup().OptionsPickupIndex == opt then
+                Isaac.Spawn(1000, EffectVariant.POOF01, 0, entity.Position, Vector.Zero, nil)
+                entity:Remove()
+            end
+        end
         return true
     end
 end
