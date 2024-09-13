@@ -315,7 +315,7 @@ function callbacks:GrabHunterKey(pickup, collider, low)
                 if player:GetNumCoins() < pickup.Price then return true end
                 player:AddCoins(-pickup.Price)
             elseif pickup.Price == -5 then
-                player:TakeDamage(2, (1<<7) | (1<<13) | (1<<28), EntityRef(player), 30)
+                player:TakeDamage(2, (1<<7) | (1<<13) | (1<<28), EntityRef(nil), 30)
                 if Game():GetRoom():GetType() == RoomType.ROOM_DEVIL then Game():AddDevilRoomDeal() end
             end
             player:AnimatePickup(pickup:GetSprite(), true)
@@ -520,23 +520,27 @@ function callbacks:SpawnHunterKey(pickup)
             variant = HunterKeyPartVariant
             price = 5
         end
+        local playerWithEquality = mod.CharaterHasTrinket(TrinketType.TRINKET_EQUALITY)
+        local playerWithBundle = mod.CharaterHasItem(CollectibleType.COLLECTIBLE_HUMBLEING_BUNDLE)
+        if (playerWithEquality and playerWithEquality:GetNumCoins() == playerWithEquality:GetNumBombs() and playerWithEquality:GetNumBombs() == playerWithEquality:GetNumKeys()) or
+            (playerWithBundle and mod.rand(1, 2, rng) == 1) then
+            if variant == HunterKeyVariant then
+                variant = DoubleHunterKeyVariant
+            elseif variant == HunterKeyPartVariant then
+                variant = HalfHunterKeyVariant
+            end
+        end
         if variant ~= pickup.Variant then
-            pickup.Price = 0
-            pickup:Morph(5, variant, 0, true, true)
+            local pickup1 = Isaac.Spawn(5, variant, 0, pickup.Position, Vector.Zero, nil):ToPickup()
+            pickup1.ShopItemId = pickup.ShopItemId
+            pickup:Remove()
+            pickup = pickup1
             pickup:Update()
+            -- pickup.Price = 0
+            -- pickup:Morph(5, variant, 0, true, true)
             pickup.AutoUpdatePrice = false
             price = GetSalePrice(price)
             pickup.Price = mod._if(pound, -5, price)
-        end
-    end
-    local playerWithEquality = mod.CharaterHasTrinket(TrinketType.TRINKET_EQUALITY)
-    local playerWithBundle = mod.CharaterHasItem(CollectibleType.COLLECTIBLE_HUMBLEING_BUNDLE)
-    if (playerWithEquality and playerWithEquality:GetNumCoins() == playerWithEquality:GetNumBombs() and playerWithEquality:GetNumBombs() == playerWithEquality:GetNumKeys()) or
-        (playerWithBundle and mod.rand(1, 2, rng) == 1) then
-        if pickup.Variant == HunterKeyVariant then
-            pickup:Morph(5, DoubleHunterKeyVariant, 0, true, true)
-        elseif pickup.Variant == HunterKeyPartVariant then
-            pickup:Morph(5, HalfHunterKeyVariant, 0, true, true)
         end
     end
     if GetHunterKeyValue(pickup) == 1 then
@@ -682,11 +686,11 @@ function callbacks:SpawnChestInNewRoom()
         local pos = Game():GetRoom():FindFreePickupSpawnPosition(Game():GetRoom():GetRandomPosition(0), 0, false, false)
         Isaac.Spawn(5, HunterChestVariant, 0, pos, Vector.Zero, nil)
     elseif Game():GetRoom():GetType() == RoomType.ROOM_DEVIL and not descriptor.SurpriseMiniboss then
-        local pos1 = Game():GetRoom():FindFreePickupSpawnPosition(Vector(240, 240), 0, true, true)
+        local pos1 = Game():GetRoom():FindFreePickupSpawnPosition(Vector(200, 240), 0, true, true)
         local ent1 = Isaac.Spawn(5, HunterKeyVariant, 0, pos1, Vector.Zero, nil):ToPickup()
         ent1.AutoUpdatePrice = false
         ent1.Price = -5
-        local pos2 = Game():GetRoom():FindFreePickupSpawnPosition(Vector(400, 240), 0, true, true)
+        local pos2 = Game():GetRoom():FindFreePickupSpawnPosition(Vector(440, 240), 0, true, true)
         local ent2 = Isaac.Spawn(5, HunterChestVariant, 0, pos2, Vector.Zero, nil):ToPickup()
         ent2.AutoUpdatePrice = false
         ent2.Price = -5

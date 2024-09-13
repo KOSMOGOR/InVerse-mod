@@ -93,13 +93,13 @@ function callbacks:CheckDreamBUnlock()
     if Game():GetLevel():GetStage() == 13 and Isaac.GetPlayer():GetPlayerType() == mod.PLAYER_DREAM and Game():GetLevel():GetCurrentRoomDesc().SafeGridIndex == 94 and room:IsFirstVisit() and #entities > 0 then
         if entities[1]:GetSprite():IsFinished("PayPrize") and not mod.Data.GlobalData.Unlocked["DreamBSoul"] then
             mod.Data.GlobalData.Unlocked["DreamBSoul"] = true
-            ShowAchievment("Tainted Dream")
+            -- ShowAchievment("Tainted Dream")
         end
     end
 end
 mod:AddCallback(ModCallbacks.MC_POST_UPDATE, callbacks.CheckDreamBUnlock)
 
-mod:AddCallback(ModCallbacks.MC_POST_PLAYER_INIT, function(self, player)
+--[[ mod:AddCallback(ModCallbacks.MC_POST_PLAYER_INIT, function(self, player)
     if player:GetPlayerType() == mod.PLAYER_DREAMBSOUL and not mod.Data.GlobalData.Unlocked["DreamBSoul"] then
         player.Visible = false
         Game():GetHUD():SetVisible(false)
@@ -125,7 +125,7 @@ mod:AddCallback(ModCallbacks.MC_POST_NEW_LEVEL, function()
         room:RemoveGridEntity(room:GetDoor(2):GetGridIndex(), 0)
         SpawnLayingDreamB()
     end
-end)
+end) ]]
 
 mod:AddCallback(ModCallbacks.MC_POST_NPC_DEATH, function(npc)
     if npc.Type == EntityType.ENTITY_DELIRIUM and mod.CharaterInGame(mod.PLAYER_DREAM) then
