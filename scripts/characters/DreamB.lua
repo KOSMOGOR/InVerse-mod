@@ -20,12 +20,15 @@ local pilfer = {
 local corpse = {}
 local markedEnemies = {}
 local heartsMelting = {}
-for i = 1, 8 do
-    markedEnemies[i] = {}
-    heartsMelting[i] = 0
-end
 local BRFamiliar = {}
 local PlayerUsedPilfer = nil
+function callbacks:SetDefaultValues(player)
+    local num = mod.GetPlayerNum(player)
+    if not markedEnemies[num] then markedEnemies[num] = {} end
+    if not heartsMelting[num] then heartsMelting[num] = 0 end
+end
+mod:AddCallback(ModCallbacks.MC_POST_PLAYER_UPDATE, callbacks.SetDefaultValues)
+mod:AddCallback(ModCallbacks.MC_POST_PLAYER_INIT, callbacks.SetDefaultValues)
 
 mod.Characters[mod.PLAYER_DREAMBSOUL] = {
     Hair = Isaac.GetCostumeIdByPath('gfx/characters/t_dre_ghost_hair.anm2'),

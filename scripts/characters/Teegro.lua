@@ -680,6 +680,7 @@ end
 mod:AddCallback(ModCallbacks.MC_POST_NEW_ROOM, callbacks.ResetTakenDamageOnNewRoom)
 
 function callbacks:SpawnChestInNewRoom()
+    if not mod.CharaterInGame(mod.PLAYER_TIGRO) then return end
     local descriptor = Game():GetLevel():GetCurrentRoomDesc()
     if mod.Data.Teegro.checkedRooms[descriptor.SafeGridIndex] then return end
     if mod.trueTable({GridRooms.ROOM_BLACK_MARKET_IDX, GridRooms.ROOM_SECRET_SHOP_IDX})[descriptor.GridIndex] then
