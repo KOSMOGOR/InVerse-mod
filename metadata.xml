@@ -1,75 +1,51 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <metadata>
-    <name>(DEMO) Dream - The New Character!</name>
+    <name>(DEMO) InVerse/MOD - Teegro Update</name>
     <directory>inverse</directory>
     <id>2810781873</id>
-    <description>[b]Quick note:[/b] PLEASE do not confuse her with other &quot;Dreams&quot; of this world. The character is fully original. Thank you!
+    <description>[b]InVerse mod includes 3 new characters for now:[/b]
 
-[h1] Dream - the new character [/h1]
+[h1]Dream[/h1]
 
-Dream start with lower than average stats and 2 new items:
+[b]Quick note:[/b] PLEASE do not confuse her with other &quot;Dreams&quot; of this world. The character is fully original. Thank you!
 
-[b]Momentuum[/b] - a throwable 1-time use item that can do almost anything! The effect of item depends on where it landed. The most common examples are:
-[list]
-    [*]Any wall - Mama Mega explosion for current room.
-    [*]Any item - Voids or duplicates ir depending on item quality.
-    [*]Any shop item (even Devil Deals) - Makes all items in current room free.
-    [*]Any door - Unlocks it (even special ones!)
-[/list]
-As wel as a TON of not so obvious effects that you have to find for yourself!
+Keep yourself safe with her passive [b]&quot;Dream's Dream Book&quot;[/b] that can restore health and give soul hearts. But to be able to do that, you need find special rooms that give charges to the bood depending on how rare they are.
 
-[b]Dream's Dream Book[/b] (what a nice name)
-[i]Actually there's 2 Dream Books...[/i] But Dream holds a special passive one. The active version can spawn naturally in treasure rooms and libraries.
-Dream's Dream Book lets you to store &quot;Heart Charges&quot;. Charges are given whenever you first visit a special room.
-Each Heart Charge can heal you for a half a heart.
-If you don't like that you can save up 3 Heart Charges and convert them into half of soul heart. [strike](Dark bum at home)[/strike]
-The Dream's special book does everything automatically.
+Additionally, Dream has a starting [b]&quot;Momentuum&quot;[/b] - powerful item that can do almost anything depending on where you throw it. Also, you can craft [b]&quot;Momentuum Cards&quot;[/b] with it if you have any tartot cards in hand, we recommend you give them a try!
 
-[b]And if you thought that that's it - think again![/b]
-[h1] New mechanic: Momentuum Cards [/h1]
+[h1]Tainted Dream[/h1]
 
-Momentuum Cards can be crafted with Momentuum while holding one of tarot cards. Just hold Momentuum for 3 seconds and you will unlock a new Momentuum Card.
-Momentuum Cards are much stronger versions of original cards.
-[i]Note: only basic tarot cards for now are implemented. Trying to craft with other consumables will give you a random Momentuum Card instead.[/i]
-Once you craft a new card it can start to spawn naturally in later runs. But only as Dream.
-Once you craft at least 3 cards a new item is unlocked. I recommend to find it for yourself!
+Balance between life and death with her pocket [b]&quot;Pilfer&quot;[/b] item that can give you health. But more you have - more chances to leave you with a half a heart instead. And don't try to ignore it too. Your health melts so no HP up is permanent.
 
-[h1] Tainted Dream [/h1] 
+While at half a heart, t.Dream takes her lost form, granting most of the Lost abilities and better stats.
 
-[i]Warning! The character isn't fully implemented yet and will be reworked in future updates![/i]
+[b]Warning![/b] The character isn't fully implemented and will be fully reworked in future updates![/i]
 
-Tainted Dream has 2 forms: Soul and Body and start with a new pocket item: Pilfer. She is a soul heart only character.
-If t. Dream has only half a heart she transforms into Soul. The Soul has better stats and all benefits from beign the Lost.
-If she has more than half a heart she transforms into Body allowing not to die in one hit.
-But be careful! The Body is gradually decaying, slowly taking all of her hearts. 
+[h1]Teegro[/h1]
 
-[b]Pilfer[/b]
-Upon Ð³se creates aura around t. Dream. The aura marks all enemies it touches
-When aura disappears all marked enemies take damage giving you half a soul heart each.
-Don't be greedy! Trying to use Pilfer wile having 4 soul hearts or more will instantly kill the Body leaving you with a half a heart. But in that case all enemies in the room will take damage either depending on how much health you wasted. Killed by that damage enemies will give you back a soul heart.
+The newest addition to InVerse mod. Acts more like &quot;challenge&quot; character. For him, most of the items locked behind the [b]Hunter Locks[/b] (even items you leave behind, so be careful). To unlock them, collect [b]Hunter Key Parts[/b] to get a full [b]Hunter Key[/b]. There are many ways to get them but most reliable one is to complete rooms without taking damage.
 
-[h1] Other things [/h1]
+More skill = more items, but besides that Teegro has some unique passives that help him with gameplay like guaranteed drops or better deals.
 
-[list]
-    [*]Birthright implemented for both characters.
-    [*]EID support.
-    [*]POG mod support.
-[/list]
+[h1]Plans[/h1]
+
+&gt; For now we're planning adding a few new characters as well as finally adding new items and challenges but it can take some time so stay tuned!
 
 [h1] Special Thanks [/h1]
 
 [list]
-    [*]KOSMOGOR - all of the mods coding.
+    [*]KOSMOGOR - all the coding.
     [*]SGT-X - Character portraits sketches.
     [*]Sanio - Just a cool guy.
 [/list]</description>
-    <version>1.2</version>
+    <version>1.4</version>
     <visibility>Public</visibility>
     <tag id="Lua"/>
     <tag id="Items"/>
     <tag id="Active Items"/>
     <tag id="Trinkets"/>
     <tag id="Cards"/>
+    <tag id="Pickups"/>
     <tag id="Player Characters"/>
     <tag id="Sound Effects"/>
 </metadata>
