@@ -10,6 +10,8 @@ local DoubleHunterKeyVariant = Isaac.GetEntityVariantByName("Double Hunter Key")
 local HalfHunterKeyVariant = Isaac.GetEntityVariantByName("Half Hunter Key")
 local RenderSincePickup = 0
 
+local locked = {}
+
 function callbacks:SetDefaultValues(player) -- Set Defaul Values
     if not mod.Data.Teegro then
         mod.Data.Teegro = {
@@ -155,13 +157,13 @@ mod:AddCallback(ModCallbacks.MC_POST_PLAYER_INIT, callbacks.OnInit)
 
 local ItemChainsVarian = Isaac.GetEntityVariantByName("ItemChains")
 local function LockItemSprite(item, touch)
-    if item.Child then
-        if item.Child.Child then
-            item.Child.Child:Remove()
-        end
-        item.Child:Remove()
-    end
     local ind = GetPickupInd(item)
+    if locked[ind] then
+        for _, entity in ipairs(locked[ind].entities) do
+            entity:Remove()
+        end
+        locked[ind] = nil
+    end
     if not touch then
         local effect1 = Isaac.Spawn(1000, ItemChainsVarian, 0, item.Position, Vector.Zero, nil):ToEffect()
         effect1:GetSprite():Play("Front", true)
@@ -171,10 +173,11 @@ local function LockItemSprite(item, touch)
         effect2:GetSprite():Play("Back", true)
         effect2.DepthOffset = -5
         effect2:FollowParent(item)
-        item.Child = effect1
-        item.Child.Child = effect2
-        effect1.Parent = item
-        effect2.Parent = effect1
+        locked[ind] = {
+            entities = {effect1, effect2},
+            item = item,
+            wait = 30
+        }
     else
         item.AutoUpdatePrice = false
         item.Price = -10
@@ -182,21 +185,35 @@ local function LockItemSprite(item, touch)
         effect.DepthOffset = -10
         effect.SpriteOffset = Vector(0, 10)
         effect:GetSprite():SetFrame("Idle", mod.Data.Teegro.lockedItems[ind].cost // 4 - 1)
-        item.Child = effect
-        effect.Parent = item
+        locked[ind] = {
+            entities = {effect},
+            item = item,
+            wait = 30
+        }
     end
 end
 
-function callbacks:UpdateChainsAndPrice(effect)
-    if effect.Variant == ItemChainsVarian or effect.Variant == KeyPriceVariant then
-        if not (effect.Parent and effect.Parent:Exists()) then
-            effect:Remove()
-        elseif effect.Position.X ~= effect.Parent.Position.X or effect.Position.Y ~= effect.Parent.Position.Y then
-            effect.Position = Vector(effect.Parent.Position.X, effect.Parent.Position.Y)
+function callbacks:UpdateChainsAndPrice()
+    for ind, obj in pairs(locked) do
+        local flag = obj.item and obj.item:Exists()
+        for _, ent in ipairs(obj.entities) do
+            if not ent:Exists() then flag = false end
+        end
+        for _, ent in ipairs(obj.entities) do
+            if not flag then
+                ent:Remove()
+            elseif obj.item.Position.X ~= ent.Position.X or obj.item.Position.Y ~= ent.Position.Y then
+                obj.item.Position = Vector(ent.Position.X, ent.Position.Y)
+            end
+        end
+        if not flag then
+            locked[ind] = nil
+        else
+            locked[ind].wait = math.max(locked[ind].wait - 1, 0)
         end
     end
 end
-mod:AddCallback(ModCallbacks.MC_POST_EFFECT_UPDATE, callbacks.UpdateChainsAndPrice)
+mod:AddCallback(ModCallbacks.MC_POST_UPDATE, callbacks.UpdateChainsAndPrice)
 
 function callbacks:OnPickupInit(pickup)
     if not mod.CharaterInGame(mod.PLAYER_TIGRO) then return end
@@ -210,7 +227,7 @@ function callbacks:OnPickupInit(pickup)
     if mod.Data.Teegro.lockedItems[ind] and mod.Data.Teegro.lockedItems[ind].Variant == 100 and pickup.Variant ~= 100 then
         mod.Data.Teegro.lockedItems[ind] = nil
     end
-    if mod.Data.Teegro.lockedItems[ind] and not pickup.Child then
+    if mod.Data.Teegro.lockedItems[ind] and not locked[ind] then
         LockItemSprite(pickup, mod.Data.Teegro.lockedItems[ind].touch)
     end
     if pickup.Variant == 100 and not mod.Data.Teegro.checkedItems[ind] and pickup:GetSprite():GetAnimation() ~= "Empty"then
@@ -249,19 +266,19 @@ function callbacks:LockedItemInteraction(pickup, collider, low)
     local player = collider:ToPlayer()
     if player == nil or pickup:GetSprite():GetAnimation() == "Empty" then return end
     local ind = GetPickupInd(pickup)
-    if mod.Data.Teegro.lockedItems[ind] and pickup.Child then
+    if mod.Data.Teegro.lockedItems[ind] and locked[ind] then
         local canPickup = player:CanPickupItem() and player:IsItemQueueEmpty() and string.lower(player:GetSprite():GetAnimation()):find("pickup", 1) == nil
-        if canPickup and pickup.Child:GetSprite():GetAnimation() ~= "FrontUnlocking" and mod.Data.Teegro.keyShards >= mod.Data.Teegro.lockedItems[ind].cost then
+        if canPickup and locked[ind].entities[1]:GetSprite():GetAnimation() ~= "FrontUnlocking" and mod.Data.Teegro.keyShards >= mod.Data.Teegro.lockedItems[ind].cost and locked[ind].wait == 0 then
             mod.Data.Teegro.keyShards = mod.Data.Teegro.keyShards - mod.Data.Teegro.lockedItems[ind].cost
-            if pickup.Child and pickup.Child.Child then
-                pickup.Child:GetSprite():Play("FrontUnlocking")
-                pickup.Child.Child:GetSprite():Play("BackUnlocking")
+            if locked[ind].entities[2] then
+                locked[ind].entities[1]:GetSprite():Play("FrontUnlocking")
+                locked[ind].entities[2]:GetSprite():Play("BackUnlocking")
                 SFXManager():Play(SoundEffect.SOUND_CHAIN_BREAK)
-            elseif pickup.Child then
+            elseif locked[ind].entities[1] then
                 if mod.Data.Teegro.lockedItems[ind].touch == true and Game():GetRoom():GetType() == RoomType.ROOM_DEVIL then
                     Game():AddDevilRoomDeal()
                 end
-                pickup.Child:Remove()
+                locked[ind].entities[1]:Remove()
                 mod.Data.Teegro.lockedItems[ind] = nil
             end
         end
@@ -274,10 +291,10 @@ function callbacks:UnlockItem(pickup)
     if not mod.CharaterInGame(mod.PLAYER_TIGRO) then return end
     local ind = GetPickupInd(pickup)
     if pickup.Variant == 100 and mod.Data.Teegro.lockedItems[ind] then
-        if pickup.Child and pickup.Child:GetSprite():IsFinished("FrontUnlocking") then
+        if locked[ind] and locked[ind].entities[1] and locked[ind].entities[1]:GetSprite():IsFinished("FrontUnlocking") then
             mod.Data.Teegro.lockedItems[ind] = nil
-            pickup.Child.Child:Remove()
-            pickup.Child:Remove()
+            locked[ind].entities[1]:Remove()
+            locked[ind].entities[2]:Remove()
         elseif pickup:GetSprite():GetAnimation() == "Empty" and pickup:GetSprite():GetOverlayFrame() == -1 then
             mod.Data.Teegro.lockedItems[ind] = nil
             pickup:Remove()
@@ -315,10 +332,12 @@ function callbacks:GrabHunterKey(pickup, collider, low)
             mod._if(keys2 > keys1, SoundEffect.SOUND_DEATH_BURST_BONE, SoundEffect.SOUND_BONE_HEART)
         )
         RenderSincePickup = 0
-        for _, entity in ipairs(Isaac.GetRoomEntities()) do
-            if entity:ToPickup() and entity:ToPickup().OptionsPickupIndex == opt then
-                Isaac.Spawn(1000, EffectVariant.POOF01, 0, entity.Position, Vector.Zero, nil)
-                entity:Remove()
+        if opt ~= 0 then
+            for _, entity in ipairs(Isaac.GetRoomEntities()) do
+                if entity:ToPickup() and entity:ToPickup().OptionsPickupIndex == opt then
+                    Isaac.Spawn(1000, EffectVariant.POOF01, 0, entity.Position, Vector.Zero, nil)
+                    entity:Remove()
+                end
             end
         end
         return true
@@ -744,9 +763,9 @@ function callbacks:ChaosCardFunctionality(tear)
     for _, pickup in ipairs(pickups) do
         pickup = pickup:ToPickup()
         local ind = GetPickupInd(pickup)
-        if mod.Data.Teegro.lockedItems[ind] and tear.Position:Distance(pickup.Position) <= 30 and pickup.Child and pickup.Child.Child and not pickup.Child:GetSprite():IsPlaying("FrontUnlocking") then
-            pickup.Child:GetSprite():Play("FrontUnlocking")
-            pickup.Child.Child:GetSprite():Play("BackUnlocking")
+        if mod.Data.Teegro.lockedItems[ind] and tear.Position:Distance(pickup.Position) <= 30 and locked[ind] and locked[ind].entities[2] and not locked[ind].entities[1]:GetSprite():IsPlaying("FrontUnlocking") then
+            locked[ind].entities[1]:GetSprite():Play("FrontUnlocking")
+            locked[ind].entities[2]:GetSprite():Play("BackUnlocking")
             SFXManager():Play(SoundEffect.SOUND_CHAIN_BREAK)
         end
     end
@@ -855,7 +874,7 @@ local spr = Sprite()
 spr:Load("gfx/ui/hunter_key.anm2", true)
 spr:SetFrame("Idle", 0)
 local tabHold = 0
-function callbacks:RenderDreamBookCharges()
+function callbacks:RenderHunterKeyCount()
     local TeegroPosition = nil
     for i = 1, Game():GetNumPlayers() do
         if Isaac.GetPlayer(i - 1):GetPlayerType() == mod.PLAYER_TIGRO then
@@ -866,7 +885,7 @@ function callbacks:RenderDreamBookCharges()
     local room = Game():GetRoom()
     if IsActionHold(ButtonAction.ACTION_MAP) then
         tabHold = tabHold + 1
-    else 
+    else
         tabHold = 0
     end
     if Game():GetHUD():IsVisible() then
@@ -875,8 +894,6 @@ function callbacks:RenderDreamBookCharges()
             alpha = 1 - (RenderSincePickup - 120) / 30
         end
         if tabHold >= 30 - 1 then
-            tabHold = 30
-            alpha = 1
             RenderSincePickup = 60
         end
         local coords1 = room:WorldToScreenPosition(TeegroPosition) - Vector(6, 40)
@@ -892,4 +909,19 @@ function callbacks:RenderDreamBookCharges()
     end
     RenderSincePickup = math.min(RenderSincePickup + 1, 180)
 end
-mod:AddCallback(ModCallbacks.MC_POST_RENDER, callbacks.RenderDreamBookCharges)
+mod:AddCallback(ModCallbacks.MC_POST_RENDER, callbacks.RenderHunterKeyCount)
+
+function callbacks:ChainsOpacity(effect)
+    if effect.Variant == ItemChainsVarian then
+        local alpha = 1
+        if tabHold >= 30 - 1 and tabHold < 40 - 1 then
+            alpha = 1 - (tabHold - 30) / 10 * 0.7
+        elseif tabHold >= 40 - 1 or RenderSincePickup <= 120 then
+            alpha = 0.3
+        elseif RenderSincePickup > 120 then
+            alpha = math.min(0.3 + (RenderSincePickup - 120) / 30 * 0.7, 1)
+        end
+        effect:GetSprite().Color = Color(1, 1, 1, alpha)
+    end
+end
+mod:AddCallback(ModCallbacks.MC_POST_EFFECT_RENDER, callbacks.ChainsOpacity)
