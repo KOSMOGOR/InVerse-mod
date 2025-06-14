@@ -1,7 +1,7 @@
 local mod = InVerse
 local callbacks = {}
 
-mod.PLAYER_TIGRO = Isaac.GetPlayerTypeByName("Teegro")
+mod.PLAYER_TEEGRO = Isaac.GetPlayerTypeByName("Teegro")
 local HunterKeyVariant = Isaac.GetEntityVariantByName("Hunter Key")
 local HunterKeyPartVariant = Isaac.GetEntityVariantByName("Hunter Key Part")
 local KeyPriceVariant = Isaac.GetEntityVariantByName("Key Price")
@@ -132,7 +132,7 @@ local function AddRestockInfo(pickup)
     end
 end
 
-mod.Characters[mod.PLAYER_TIGRO] = {
+mod.Characters[mod.PLAYER_TEEGRO] = {
     Hair = Isaac.GetCostumeIdByPath("gfx/characters/teegro_hair.anm2"),
     Tail = Isaac.GetCostumeIdByPath("gfx/characters/teegro_tail.anm2"),
     DAMAGE = 1.6,
@@ -148,9 +148,9 @@ mod.Characters[mod.PLAYER_TIGRO] = {
 }
 
 function callbacks:OnInit(player)
-    if player:GetPlayerType() == mod.PLAYER_TIGRO then
-        player:AddNullCostume(mod.Characters[mod.PLAYER_TIGRO].Hair)
-        player:AddNullCostume(mod.Characters[mod.PLAYER_TIGRO].Tail)
+    if player:GetPlayerType() == mod.PLAYER_TEEGRO then
+        player:AddNullCostume(mod.Characters[mod.PLAYER_TEEGRO].Hair)
+        player:AddNullCostume(mod.Characters[mod.PLAYER_TEEGRO].Tail)
     end
 end
 mod:AddCallback(ModCallbacks.MC_POST_PLAYER_INIT, callbacks.OnInit)
@@ -216,7 +216,7 @@ end
 mod:AddCallback(ModCallbacks.MC_POST_UPDATE, callbacks.UpdateChainsAndPrice)
 
 function callbacks:OnPickupInit(pickup)
-    if not mod.CharaterInGame(mod.PLAYER_TIGRO) then return end
+    if not mod.CharaterInGame(mod.PLAYER_TEEGRO) then return end
     if Game():GetLevel():GetCurrentRoomDesc().GridIndex == GridRooms.ROOM_GENESIS_IDX then return end
     if GetDimension() == 2 then return end
     local ind = GetPickupInd(pickup)
@@ -288,7 +288,7 @@ end
 mod:AddCallback(ModCallbacks.MC_PRE_PICKUP_COLLISION, callbacks.LockedItemInteraction)
 
 function callbacks:UnlockItem(pickup)
-    if not mod.CharaterInGame(mod.PLAYER_TIGRO) then return end
+    if not mod.CharaterInGame(mod.PLAYER_TEEGRO) then return end
     local ind = GetPickupInd(pickup)
     if pickup.Variant == 100 and mod.Data.Teegro.lockedItems[ind] then
         if locked[ind] and locked[ind].entities[1] and locked[ind].entities[1]:GetSprite():IsFinished("FrontUnlocking") then
@@ -353,6 +353,7 @@ function callbacks:OnChestInit(pickup)
             Variant = pickup.Variant,
             SubType = pickup.SubType
         }
+        if pickup:GetSprite():GetAnimation() == "Open" then return end
         local rng = RNG()
         rng:SetSeed(pickup.InitSeed, 35)
         local spawnPickups = {}
@@ -446,6 +447,7 @@ function callbacks:OpenHunterChest(pickup, collider, low)
             end
             local pickup2 = Isaac.Spawn(5, HunterChestVariant, 0, pickup.Position, pickup.Velocity, nil)
             pickup2:GetSprite():Play("Open")
+            pickup2.EntityCollisionClass = EntityCollisionClass.ENTCOLL_ALL
             pickup:Remove()
             mod.Data.Teegro.itemsDeleteOnNewRoom[GetPickupInd(pickup2)] = true
         else
@@ -487,7 +489,7 @@ end
 mod:AddCallback(ModCallbacks.MC_POST_PICKUP_UPDATE, callbacks.HunterChestUpdate)
 
 function callbacks:SpawnHunterKey(pickup)
-    if not mod.CharaterInGame(mod.PLAYER_TIGRO) or pickup.Variant == 100 then return end
+    if not mod.CharaterInGame(mod.PLAYER_TEEGRO) or pickup.Variant == 100 then return end
     local ind = GetPickupInd(pickup)
     if mod.Data.Teegro.checkedItems[ind] and mod.Data.Teegro.checkedItems[ind].Variant ~= pickup.Variant then
         mod.Data.Teegro.checkedItems[ind] = nil
@@ -500,7 +502,7 @@ function callbacks:SpawnHunterKey(pickup)
             pickup:Morph(5, HunterKeyPartVariant, 0, true, false)
         end
     elseif pickup.Variant == 30 and pickup.Price == 0 then
-        local keyChance = mod._if(mod.CharaterHasBirthright(mod.PLAYER_TIGRO), 20, 5)
+        local keyChance = mod._if(mod.CharaterHasBirthright(mod.PLAYER_TEEGRO), 20, 5)
         local upperBound = mod._if(mod.trueTable({RoomType.ROOM_SECRET, RoomType.ROOM_SUPERSECRET, RoomType.ROOM_ULTRASECRET})[Game():GetRoom():GetType()], 250 + keyChance, 1000)
         local r = mod.rand(1, upperBound, rng)
         if r <= keyChance then
@@ -533,6 +535,7 @@ function callbacks:SpawnHunterKey(pickup)
         if variant ~= pickup.Variant then
             local pickup1 = Isaac.Spawn(5, variant, 0, pickup.Position, Vector.Zero, nil):ToPickup()
             pickup1.ShopItemId = pickup.ShopItemId
+            pickup1.Price = price
             pickup:Remove()
             pickup = pickup1
             pickup:Update()
@@ -585,7 +588,7 @@ end
 mod:AddCallback(ModCallbacks.MC_POST_NEW_ROOM, callbacks.LockPickupSpritesOnNewRoom)
 
 function callbacks:CheckRoomReward()
-    if not mod.CharaterInGame(mod.PLAYER_TIGRO) then return end
+    if not mod.CharaterInGame(mod.PLAYER_TEEGRO) then return end
     local room = Game():GetRoom()
     local gridIndex = Game():GetLevel():GetCurrentRoomDesc().SafeGridIndex
     local entities = room:GetEntities()
@@ -633,7 +636,7 @@ end
 mod:AddCallback(ModCallbacks.MC_POST_UPDATE, callbacks.CheckRoomReward)
 
 function callbacks:SpawnKeyAfterBossDeath(npc)
-    if not mod.CharaterInGame(mod.PLAYER_TIGRO) then return end
+    if not mod.CharaterInGame(mod.PLAYER_TEEGRO) then return end
     local spawn = {}
     if npc:IsBoss() and not mod.Data.Teegro.bossWasKilled then
         if mod.trueTable({RoomType.ROOM_BOSS, RoomType.ROOM_DEVIL, RoomType.ROOM_ANGEL, RoomType.ROOM_MINIBOSS, RoomType.ROOM_SHOP, RoomType.ROOM_CHALLENGE, RoomType.ROOM_SECRET, RoomType.ROOM_SUPERSECRET})[Game():GetRoom():GetType()] then
@@ -680,7 +683,7 @@ end
 mod:AddCallback(ModCallbacks.MC_POST_NEW_ROOM, callbacks.ResetTakenDamageOnNewRoom)
 
 function callbacks:SpawnChestInNewRoom()
-    if not mod.CharaterInGame(mod.PLAYER_TIGRO) then return end
+    if not mod.CharaterInGame(mod.PLAYER_TEEGRO) then return end
     local descriptor = Game():GetLevel():GetCurrentRoomDesc()
     if mod.Data.Teegro.checkedRooms[descriptor.SafeGridIndex] then return end
     if mod.trueTable({GridRooms.ROOM_BLACK_MARKET_IDX, GridRooms.ROOM_SECRET_SHOP_IDX})[descriptor.GridIndex] then
@@ -723,7 +726,7 @@ mod:AddCallback(ModCallbacks.MC_POST_NEW_LEVEL, callbacks.ResetCheckedRoom)
 
 function callbacks:BirthrightEffect()
     local stage = Game():GetLevel():GetStage()
-    if mod.CharaterHasBirthright(mod.PLAYER_TIGRO) and stage ~= LevelStage.STAGE6 then
+    if mod.CharaterHasBirthright(mod.PLAYER_TEEGRO) and stage ~= LevelStage.STAGE6 then
         local rng = RNG()
         rng:SetSeed(Game():GetRoom():GetAwardSeed(), 35)
         for i = 1, 4 do
@@ -882,7 +885,7 @@ local tabHold = 0
 function callbacks:RenderHunterKeyCount()
     local TeegroPosition = nil
     for i = 1, Game():GetNumPlayers() do
-        if Isaac.GetPlayer(i - 1):GetPlayerType() == mod.PLAYER_TIGRO then
+        if Isaac.GetPlayer(i - 1):GetPlayerType() == mod.PLAYER_TEEGRO then
             TeegroPosition = Isaac.GetPlayer(i - 1).Position
         end
     end
